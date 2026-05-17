@@ -1,4 +1,7 @@
-# Standard RB — Implementation Plan
+# Standard RB (SRB) — Implementation Plan
+
+> **Status:** ✅ Complete — see `RB.ipynb`. Kept here for reference; next phase is `INTERLEAVED_PLAN.md`.
+
 
 ## Parameters
 - `m_values = [1, 2, 4, 8, 16, 32, 64, 128]`
