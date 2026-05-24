@@ -1,14 +1,16 @@
 # Cycle Benchmarking (CB) — Implementation Plan
 
-> **Status:** 🟢 **Part A (1 qubit) COMPLETE & validated.** Part B (multi-qubit, CZ) next.
+> **Status:** 🟢 **Part A (1 qubit) complete.** Part B **Rung 1 (N=2 identity) complete — factorization holds.**
 > Implemented in `CB.ipynb` (separate from `RB.ipynb` = SRB + IRB). Structurally distinct from SRB/IRB:
 > no inversion gate, Pauli propagation, per-Pauli decay. Designed to scale 1 → 2 → 3 qubits and to
 > swap simulator → IBM hardware.
 >
-> **▶ Resume here:** Part A done — `run_cb` + `F_RC`/`r`, validated on the **I and H cycles** across
-> depol / dephasing / bit-flip / biased via the commute formula; orbit-geomean rule confirmed on H.
-> RNG cleaned to a shared `np.random.default_rng(42)`.
-> **Next → Part B, Rung 1: N=2, identity cycle, confirm factorization `λ_{A⊗B} = λ_A·λ_B`.**
+> **▶ Resume here:** Architecture refactored to a `CBConfig` dataclass + `run_experiment(cfg, cycle_gates, noises)`
+> (`run_cb`/`run_once` take `cfg`; sim built once per noise). **Rung 1 (N=2, G=I) passes** — measured `F_RC`
+> matches the factorized *independent* prediction across all 4 noises (depol 0.92 / dephasing 0.90 / bit-flip 0.89 /
+> biased 0.81), weight-2 `λ_P` factorize. Fixed a two-length NaN by `m2 12→8` (low-fidelity multi-qubit Paulis
+> decayed below the shot-noise floor → `F_{m2}` could go negative → `(neg)^{1/Δm}=NaN`).
+> **Next → Rung 2: N=2, inject correlated `ZZ`, show factorization break.**
 
 ## Goal
 Estimate the per-Pauli fidelities `λ_P` of a dressed Clifford cycle and the error per cycle
@@ -36,7 +38,9 @@ averages into one number — and at N≥2 it exposes **correlations between qubi
 ## Parameters
 - `n_qubits`: 1 (done) → 2, 3.
 - `cycle_gate`: `"I"` | `"H"` (order 2) | `"s"` (order 4) | `"cz"` (order 2) → `make_cycle` returns `(G_map, order)`.
-- **Two lengths** `m1 = 4`, `m2 = 12` (multiples of the cycle order so `G^m = I`).
+- **Two lengths** `m1 = 4`, `m2 = 8` (multiples of the cycle order so `G^m = I`). *(Was 12; shortened so
+  low-fidelity multi-qubit Paulis keep a measurable signal at `m2` — at `m2=12`, `λ≈0.72` decays to ~1%, below
+  the shot-noise floor, making `(F_{m2}/F_{m1})` go negative → NaN.)*
 - `K = 30` Paulis (all non-identity for N≤2; random subset of size `K` for N≥3).
 - `L = 30` random sequences per `(P, m)`; `shots = 100` (raise freely in sim).
 - `rng = np.random.default_rng(42)` — one shared generator, threaded into `run_cb` / `make_paulis`.
@@ -106,8 +110,9 @@ an orbit, so recovered `λ_P` = geomean over P's CZ-orbit. CZ **fixes** the Z-ty
 (`Z⊗I, I⊗Z, Z⊗Z`) and **pairs** the X-type ones (`X⊗I ↔ X⊗Z`, `I⊗X ↔ Z⊗X`, …).
 
 **The arc (the order):**
-1. **Rung 1 — N=2, G=I, independent noise.** One config change. Confirm `λ_{A⊗B}=λ_A·λ_B`. Validates
-   the N-qubit plumbing (2-qubit Pauli strings, multi-qubit parity, tensored noise) against the commute formula.
+1. **Rung 1 — N=2, G=I, independent noise. ✅** Confirmed `λ_{A⊗B} ≈ λ_A·λ_B` and `F_RC` matches the
+   factorized prediction across all 4 noises (within shot noise) — N-qubit plumbing validated; the drop in
+   `F_RC` vs N=1 is pure independent-error accumulation (weight-2 Paulis decay as the product), no crosstalk.
 2. **Rung 2 — N=2, G=I, correlated noise.** Inject a `ZZ` Pauli error → watch factorization **break**.
    *The headline — CB sees what SRB can't.*
 3. **Rung 3 — N=2, G=CZ.** Benchmark the real entangling layer; orbit-geomean does its job. Optionally
@@ -120,9 +125,9 @@ an orbit, so recovered `λ_P` = geomean over P's CZ-orbit. CZ **fixes** the Z-ty
 - `make_noise`: two N-qubit modes — **independent** = tensor of 1q Pauli errors; **correlated** =
   a 2-qubit Pauli error (weight on `ZZ`). *(Start with the `ZZ` Pauli error — stays a Pauli channel,
   stabilizer-friendly, breaks factorization unambiguously. Coherent `exp(-iθ ZZ)` is the later physical version.)*
-- `make_paulis`: K-subset for N≥3 — give it a **fixed local seed** so the subset is stable across calls
-  (the shared `rng` would drift it).
-- `m1,m2 = 4,12`: multiples of CZ order 2 ⇒ `G^m=I`.
+- `make_paulis`: computed **once** per experiment (inside `run_experiment`) so the set is stable. For N≥3 the
+  K-subset must **always include the weight-1 marginals** (3N of them) so `factorization_test` can look them up.
+- `m1,m2 = 4,8`: multiples of CZ order 2 ⇒ `G^m=I`.
 
 **Deliverables:**
 1. **Factorization breakdown** — `λ_{A⊗B}` vs `λ_A·λ_B`; the deviation matrix = crosstalk signature.
@@ -142,7 +147,8 @@ measured `λ_P` alone, so it transfers directly to IBM (where inject-recover is 
 - **One execution path** (no exact/SuperOp mode): build → run with shots → parity → estimate `f`.
   Aer method by noise: stabilizer (Pauli, scales) / density-matrix (coherent). Same path → IBM SamplerV2.
 - **Measurement = Sampler + parity**, not Estimator — identical code on Aer and IBM.
-- Shared `rng` generator; `make_paulis` gets a fixed local seed for the N≥3 subset.
+- Shared `rng` generator threaded via `CBConfig`; `make_paulis` drawn once per experiment (N≥3 subset must include the weight-1 marginals).
+- **Architecture:** `CBConfig` (dataclass: n_qubits, shots, m1, m2, L, K, label, rng) → `run_experiment(cfg, cycle_gates, noises)` → `run_cb(paulis, cfg, G_map, G_gate, sim)` → `run_once(P, m, cfg, G_map, G_gate, sim)`.
 
 ## Verification
 | # | check | status |
@@ -150,19 +156,22 @@ measured `λ_P` alone, so it transfers directly to IBM (where inject-recover is 
 | M1 | noiseless `f = +1` for every P / draw | ✅ |
 | M2 | inject-recover: measured `λ_P` vs commute formula (1q) | ✅ |
 | V1 | anisotropy (dephasing / bit-flip / biased) | ✅ |
-| F1 | factorization `λ_{A⊗B}=λ_A·λ_B` holds (independent) and breaks (correlated) | ⬜ Part B |
+| F1 | factorization `λ_{A⊗B}=λ_A·λ_B` holds (independent) ✅ N=2 / breaks (correlated) ⬜ Rung 2 | 🟡 |
 | V4 | reconstruct `p_Q` via inverse Walsh–Hadamard | ⬜ optional, Part B |
 
 > Acceptance tolerances are shot-based (shrink ∝ 1/√(shots·L)) — pin numbers per check as we go.
 
-## Later (planned — we want these)
+## Part C — Scaling & Hardware (backlog → issues #5, #6)
+- **#5 N=10 scaling demo** — stabilizer sim; first resolve whether the labelled `UnitaryGate` survives
+  stabilizer mode (density-matrix dies at 2¹⁰). Plot `F_RC` vs N. Deferred until Part B validates the machinery.
+- **#6 IBM hardware** — swap backend → `QiskitRuntimeService` SamplerV2; the build → run → parity path is
+  unchanged. Factorization becomes the on-device self-consistency check. Needs the sim validated + queue access.
+
+## Later (planned)
 - **Coherent-noise + twirl demo** — inject `coherent(θ)` and show the random-Pauli twirl restores a
   clean `λ_P` (density-matrix sim, small N). The clearest demonstration of *why* the twirl exists.
-- **IBM hardware** — swap backend → `QiskitRuntimeService` SamplerV2; the build → run → parity path is
-  unchanged. Factorization becomes the on-device self-consistency check.
 
 ## Out of scope (this phase)
-- N=10 scaling run (stabilizer + labelled-gate risk) — deferred; the science is visible at N=2,3.
 - Non-Clifford *cycles of interest* (G itself non-Clifford).
 - Noisy random Paulis (twirl gates stay ideal for now).
 - Full off-diagonal noise reconstruction beyond the diagonal `λ_P`.
