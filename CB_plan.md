@@ -1,18 +1,20 @@
 # Cycle Benchmarking (CB) — Implementation Plan
 
 > **Status:** 🟢 **Part A (1 qubit) complete.** Part B **Rung 1 (N=2 identity, factorization holds) +
-> Rung 2 (N=2 correlated ZZ, factorization breaks) complete.**
+> Rung 2 (N=2 correlated ZZ, factorization breaks) + Rung 3 (N=2 CZ, orbit-geomean predictor validated) complete.**
 > Implemented in `CB.ipynb` (separate from `RB.ipynb` = SRB + IRB). Structurally distinct from SRB/IRB:
 > no inversion gate, Pauli propagation, per-Pauli decay. Designed to scale 1 → 2 → 3 qubits and to
 > swap simulator → IBM hardware.
 >
 > **▶ Resume here:** Architecture refactored to a `CBConfig` dataclass + `run_experiment(cfg, cycle_gates, noises)`
-> (`run_cb`/`run_once` take `cfg`; sim built once per noise). **Rung 2 (N=2, G=I, correlated ZZ) passes** —
-> injected `{II:0.95, ZZ:0.05}` via a new `make_noise` `"correlated"` mode (2-qubit `pauli_error`, **not** tensored);
-> `factorization_test` lights up exactly `{XX,XY,YX,YY}` at **Δ ≈ +0.17–0.19** (predicted +0.19), all other joints
-> flat — while every independent noise stays flat. Punchline confirmed: correlated `F_RC = 0.949` is *higher* than the
-> independent runs (~0.90–0.92), so a scalar fidelity *hides* the crosstalk that the per-Pauli `λ_P` exposes.
-> **Next → Rung 3: N=2, G=CZ — benchmark the real entangling layer (orbit-geomean).**
+> (`run_cb`/`run_once` take `cfg`; sim built once per noise). **Rung 3 (N=2, G=CZ) passes** — new
+> `expected_lambda_orbit(probs, P, G_map)` follows each Pauli around its CZ-orbit (`P → GPG†`) and returns the geomean
+> of the bare per-qubit-product `λ`'s; one predictor now covers I, H, CZ (wired into `run_experiment` for any
+> independent Pauli noise). With bit-flip noise, measured `λ_P` matches the orbit prediction across all 15 Paulis
+> (`F_RC` 0.8947 vs 0.8931): `λ_XI≈0.95` `{XI,XZ}`, `λ_XX≈0.90` `{XX,YY}`, `λ_ZZ≈0.81` (frozen). **Key result:** the
+> orbit predictor separates the gate's Pauli rotation from real crosstalk — `factorization_test` *false-alarms* here
+> (CZ blends the marginals), so the orbit yardstick is what would catch genuine crosstalk on an entangler.
+> **Next → Rung 4: N=3 — same machinery, K-subset Paulis (must include weight-1 marginals).**
 
 ## Goal
 Estimate the per-Pauli fidelities `λ_P` of a dressed Clifford cycle and the error per cycle
@@ -120,8 +122,12 @@ an orbit, so recovered `λ_P` = geomean over P's CZ-orbit. CZ **fixes** the Z-ty
    Δ≈+0.17–0.19 (predicted +0.19), all other joints flat; the four marginals `IX,IY,XI,YI=0.90=1−2q`, immune
    `IZ,ZI,ZZ=1.0`. **Correlated `F_RC=0.949` > independent ~0.90–0.92** — the average fidelity hides the crosstalk
    the per-Pauli `λ_P` exposes. *The headline — CB sees what SRB can't.*
-3. **Rung 3 — N=2, G=CZ.** Benchmark the real entangling layer; orbit-geomean does its job. Optionally
-   reconstruct `p_Q` via inverse Walsh–Hadamard → which 2-qubit error dominates.
+3. **Rung 3 — N=2, G=CZ. ✅** Benchmarked the real entangling layer. New `expected_lambda_orbit` follows each
+   Pauli around its CZ-orbit and geomeans the bare per-qubit-product `λ`'s; with bit-flip noise the measured
+   `λ_P` matched the prediction for all 15 Paulis (`F_RC` 0.8947 vs 0.8931): `λ_XI≈0.95`, `λ_XX≈0.90`,
+   `λ_ZZ≈0.81`. **Crucial:** `factorization_test` *false-alarms* under CZ (the gate blends the marginals, so
+   joints ≠ marginal-products even with independent noise) — the **orbit predictor** is the honest yardstick
+   that distinguishes gate-rotation from genuine crosstalk. Optional later: reconstruct `p_Q` via inverse WHT.
 4. **Rung 4 — N=3.** Same machinery, K-subset Paulis.
 
 **Cell deltas:**
@@ -162,6 +168,7 @@ measured `λ_P` alone, so it transfers directly to IBM (where inject-recover is 
 | M2 | inject-recover: measured `λ_P` vs commute formula (1q) | ✅ |
 | V1 | anisotropy (dephasing / bit-flip / biased) | ✅ |
 | F1 | factorization `λ_{A⊗B}=λ_A·λ_B` holds (independent) ✅ N=2 / breaks (correlated ZZ) ✅ Rung 2 | ✅ |
+| O1 | orbit-geomean: CZ `λ_P` = geomean over CZ-orbit (bit-flip, all 15 Paulis) ✅ Rung 3 | ✅ |
 | V4 | reconstruct `p_Q` via inverse Walsh–Hadamard | ⬜ optional, Part B |
 
 > Acceptance tolerances are shot-based (shrink ∝ 1/√(shots·L)) — pin numbers per check as we go.
