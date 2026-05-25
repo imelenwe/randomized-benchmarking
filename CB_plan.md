@@ -1,16 +1,18 @@
 # Cycle Benchmarking (CB) — Implementation Plan
 
-> **Status:** 🟢 **Part A (1 qubit) complete.** Part B **Rung 1 (N=2 identity) complete — factorization holds.**
+> **Status:** 🟢 **Part A (1 qubit) complete.** Part B **Rung 1 (N=2 identity, factorization holds) +
+> Rung 2 (N=2 correlated ZZ, factorization breaks) complete.**
 > Implemented in `CB.ipynb` (separate from `RB.ipynb` = SRB + IRB). Structurally distinct from SRB/IRB:
 > no inversion gate, Pauli propagation, per-Pauli decay. Designed to scale 1 → 2 → 3 qubits and to
 > swap simulator → IBM hardware.
 >
 > **▶ Resume here:** Architecture refactored to a `CBConfig` dataclass + `run_experiment(cfg, cycle_gates, noises)`
-> (`run_cb`/`run_once` take `cfg`; sim built once per noise). **Rung 1 (N=2, G=I) passes** — measured `F_RC`
-> matches the factorized *independent* prediction across all 4 noises (depol 0.92 / dephasing 0.90 / bit-flip 0.89 /
-> biased 0.81), weight-2 `λ_P` factorize. Fixed a two-length NaN by `m2 12→8` (low-fidelity multi-qubit Paulis
-> decayed below the shot-noise floor → `F_{m2}` could go negative → `(neg)^{1/Δm}=NaN`).
-> **Next → Rung 2: N=2, inject correlated `ZZ`, show factorization break.**
+> (`run_cb`/`run_once` take `cfg`; sim built once per noise). **Rung 2 (N=2, G=I, correlated ZZ) passes** —
+> injected `{II:0.95, ZZ:0.05}` via a new `make_noise` `"correlated"` mode (2-qubit `pauli_error`, **not** tensored);
+> `factorization_test` lights up exactly `{XX,XY,YX,YY}` at **Δ ≈ +0.17–0.19** (predicted +0.19), all other joints
+> flat — while every independent noise stays flat. Punchline confirmed: correlated `F_RC = 0.949` is *higher* than the
+> independent runs (~0.90–0.92), so a scalar fidelity *hides* the crosstalk that the per-Pauli `λ_P` exposes.
+> **Next → Rung 3: N=2, G=CZ — benchmark the real entangling layer (orbit-geomean).**
 
 ## Goal
 Estimate the per-Pauli fidelities `λ_P` of a dressed Clifford cycle and the error per cycle
@@ -113,8 +115,11 @@ an orbit, so recovered `λ_P` = geomean over P's CZ-orbit. CZ **fixes** the Z-ty
 1. **Rung 1 — N=2, G=I, independent noise. ✅** Confirmed `λ_{A⊗B} ≈ λ_A·λ_B` and `F_RC` matches the
    factorized prediction across all 4 noises (within shot noise) — N-qubit plumbing validated; the drop in
    `F_RC` vs N=1 is pure independent-error accumulation (weight-2 Paulis decay as the product), no crosstalk.
-2. **Rung 2 — N=2, G=I, correlated noise.** Inject a `ZZ` Pauli error → watch factorization **break**.
-   *The headline — CB sees what SRB can't.*
+2. **Rung 2 — N=2, G=I, correlated noise. ✅** Injected `{II:0.95, ZZ:0.05}` (new `make_noise` `"correlated"`
+   mode — full 2-qubit `pauli_error`, not tensored). `factorization_test` lit up exactly `{XX,XY,YX,YY}` at
+   Δ≈+0.17–0.19 (predicted +0.19), all other joints flat; the four marginals `IX,IY,XI,YI=0.90=1−2q`, immune
+   `IZ,ZI,ZZ=1.0`. **Correlated `F_RC=0.949` > independent ~0.90–0.92** — the average fidelity hides the crosstalk
+   the per-Pauli `λ_P` exposes. *The headline — CB sees what SRB can't.*
 3. **Rung 3 — N=2, G=CZ.** Benchmark the real entangling layer; orbit-geomean does its job. Optionally
    reconstruct `p_Q` via inverse Walsh–Hadamard → which 2-qubit error dominates.
 4. **Rung 4 — N=3.** Same machinery, K-subset Paulis.
@@ -156,7 +161,7 @@ measured `λ_P` alone, so it transfers directly to IBM (where inject-recover is 
 | M1 | noiseless `f = +1` for every P / draw | ✅ |
 | M2 | inject-recover: measured `λ_P` vs commute formula (1q) | ✅ |
 | V1 | anisotropy (dephasing / bit-flip / biased) | ✅ |
-| F1 | factorization `λ_{A⊗B}=λ_A·λ_B` holds (independent) ✅ N=2 / breaks (correlated) ⬜ Rung 2 | 🟡 |
+| F1 | factorization `λ_{A⊗B}=λ_A·λ_B` holds (independent) ✅ N=2 / breaks (correlated ZZ) ✅ Rung 2 | ✅ |
 | V4 | reconstruct `p_Q` via inverse Walsh–Hadamard | ⬜ optional, Part B |
 
 > Acceptance tolerances are shot-based (shrink ∝ 1/√(shots·L)) — pin numbers per check as we go.
