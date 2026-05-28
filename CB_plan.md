@@ -14,6 +14,13 @@
 > (`F_RC` 0.8947 vs 0.8931): `λ_XI≈0.95` `{XI,XZ}`, `λ_XX≈0.90` `{XX,YY}`, `λ_ZZ≈0.81` (frozen). **Key result:** the
 > orbit predictor separates the gate's Pauli rotation from real crosstalk — `factorization_test` *false-alarms* here
 > (CZ blends the marginals), so the orbit yardstick is what would catch genuine crosstalk on an entangler.
+>
+> **Rung 3 close-out — crosstalk *caught* on CZ (the payoff).** Fed CZ the correlated `ZZ` (Rung 2's noise) and gave the
+> predictor its `marginal_probs` (= dephasing 0.05) as the independent baseline. Measured `λ_P` pulls away from the
+> baseline on exactly `{XX,XY,YX,YY}`: **expected 0.81 → measured 1.0, Δ = +0.19** (others Δ≈0). Crosstalk detected on a
+> *real entangling gate* — which `factorization_test` cannot call. `F_RC` measured 0.947 vs baseline 0.896 (crosstalk
+> makes the gate look ~5% *better* on average). Added `CBConfig.factorization` flag (default `False`): orbit predictor is
+> the sim detector; factorization is the hardware self-consistency check, off until #6.
 > **Next → Rung 4: N=3 — same machinery, K-subset Paulis (must include weight-1 marginals).**
 
 ## Goal
@@ -128,6 +135,10 @@ an orbit, so recovered `λ_P` = geomean over P's CZ-orbit. CZ **fixes** the Z-ty
    `λ_ZZ≈0.81`. **Crucial:** `factorization_test` *false-alarms* under CZ (the gate blends the marginals, so
    joints ≠ marginal-products even with independent noise) — the **orbit predictor** is the honest yardstick
    that distinguishes gate-rotation from genuine crosstalk. Optional later: reconstruct `p_Q` via inverse WHT.
+   **Close-out (crosstalk caught on CZ): ✅** fed CZ the correlated `ZZ` + handed the predictor `marginal_probs`
+   (the independent baseline). Measured pulled away on exactly `{XX,XY,YX,YY}` — **expected 0.81 → measured 1.0,
+   Δ = +0.19**, all else Δ≈0. Crosstalk detected on a real entangler — factorization can't (blended marginals).
+   `factorization_test` now gated behind `CBConfig.factorization` (default `False`; on for hardware).
 4. **Rung 4 — N=3.** Same machinery, K-subset Paulis.
 
 **Cell deltas:**
@@ -159,7 +170,8 @@ measured `λ_P` alone, so it transfers directly to IBM (where inject-recover is 
   Aer method by noise: stabilizer (Pauli, scales) / density-matrix (coherent). Same path → IBM SamplerV2.
 - **Measurement = Sampler + parity**, not Estimator — identical code on Aer and IBM.
 - Shared `rng` generator threaded via `CBConfig`; `make_paulis` drawn once per experiment (N≥3 subset must include the weight-1 marginals).
-- **Architecture:** `CBConfig` (dataclass: n_qubits, shots, m1, m2, L, K, label, rng) → `run_experiment(cfg, cycle_gates, noises)` → `run_cb(paulis, cfg, G_map, G_gate, sim)` → `run_once(P, m, cfg, G_map, G_gate, sim)`.
+- **Two crosstalk detectors, different jobs:** (1) **orbit predictor** `expected_lambda_orbit(probs, P, G_map)` — *needs the noise* (`to_probs`, or `marginal_probs` for correlated), so it's an inject-and-recover **validation**, correct on any cycle (sim only). (2) **`factorization_test`** — *needs no noise*, pure self-consistency on measured `λ`, so it's the **hardware** check — but false-alarms on rotating gates (CZ) as-is; gated behind `CBConfig.factorization` (default `False`). Correlated noise carries a `marginal_probs` (its per-qubit baseline) so the orbit predictor can compute the independent baseline; the measured−expected gap = crosstalk.
+- **Architecture:** `CBConfig` (dataclass: n_qubits, shots, m1, m2, L, K, label, rng, factorization=False) → `run_experiment(cfg, cycle_gates, noises)` → `run_cb(paulis, cfg, G_map, G_gate, sim)` → `run_once(P, m, cfg, G_map, G_gate, sim)`.
 
 ## Verification
 | # | check | status |
@@ -169,6 +181,7 @@ measured `λ_P` alone, so it transfers directly to IBM (where inject-recover is 
 | V1 | anisotropy (dephasing / bit-flip / biased) | ✅ |
 | F1 | factorization `λ_{A⊗B}=λ_A·λ_B` holds (independent) ✅ N=2 / breaks (correlated ZZ) ✅ Rung 2 | ✅ |
 | O1 | orbit-geomean: CZ `λ_P` = geomean over CZ-orbit (bit-flip, all 15 Paulis) ✅ Rung 3 | ✅ |
+| O2 | crosstalk on CZ: correlated ZZ → measured−baseline = +0.19 on `{XX,XY,YX,YY}`, else ≈0 ✅ | ✅ |
 | V4 | reconstruct `p_Q` via inverse Walsh–Hadamard | ⬜ optional, Part B |
 
 > Acceptance tolerances are shot-based (shrink ∝ 1/√(shots·L)) — pin numbers per check as we go.
