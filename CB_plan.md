@@ -1,7 +1,8 @@
 # Cycle Benchmarking (CB) — Implementation Plan
 
-> **Status:** 🟢 **Part A (1 qubit) complete.** Part B **Rung 1 (N=2 identity, factorization holds) +
-> Rung 2 (N=2 correlated ZZ, factorization breaks) + Rung 3 (N=2 CZ, orbit-geomean predictor validated) complete.**
+> **Status:** 🟢 **Part A (1 qubit) complete.** Part B **Rungs 1–4 complete** — Rung 1 (N=2 identity, factorization holds),
+> Rung 2 (N=2 correlated ZZ, factorization breaks), Rung 3 (N=2 CZ, orbit predictor + crosstalk caught on CZ),
+> Rung 4 (N=3 scaling validated). **Part B done.**
 > Implemented in `CB.ipynb` (separate from `RB.ipynb` = SRB + IRB). Structurally distinct from SRB/IRB:
 > no inversion gate, Pauli propagation, per-Pauli decay. Designed to scale 1 → 2 → 3 qubits and to
 > swap simulator → IBM hardware.
@@ -21,7 +22,15 @@
 > *real entangling gate* — which `factorization_test` cannot call. `F_RC` measured 0.947 vs baseline 0.896 (crosstalk
 > makes the gate look ~5% *better* on average). Added `CBConfig.factorization` flag (default `False`): orbit predictor is
 > the sim detector; factorization is the hardware self-consistency check, off until #6.
-> **Next → Rung 4: N=3 — same machinery, K-subset Paulis (must include weight-1 marginals).**
+>
+> **Rung 4 — N=3 scaling validated. ✅** `make_cycle("cz")` generalized to a disjoint-pair layer
+> (`range(0, n_qubits-1, 2)`); `make_cycle("H")` fixed to all qubits. Ran G=CZ + bit-flip at N=3 with the random
+> **K=30 subset of 63** Paulis: orbit `expected ≈ measured` for all 30 (max |Δ|≈0.02, `F_RC` 0.8651 vs 0.8682), no NaN
+> on weight-3 Paulis at `m2=8`. Full-63 run also clean. **K-subset path + 3-qubit orbits (idle-qubit spectator) +
+> noise tensoring all validated — machinery scales.** (Skipped correlated@N=3: it's the N=2 demo + a bystander, and
+> per-pair correlated noise is genuinely an N≥4/N=10 job.)
+> **Next → Part C #5: N=10 scaling — needs the stabilizer-sim rebuild (labelled `UnitaryGate` → native Cliffords) +
+> per-pair correlated ZZ. Part C #6: IBM hardware.**
 
 ## Goal
 Estimate the per-Pauli fidelities `λ_P` of a dressed Clifford cycle and the error per cycle
@@ -139,7 +148,11 @@ an orbit, so recovered `λ_P` = geomean over P's CZ-orbit. CZ **fixes** the Z-ty
    (the independent baseline). Measured pulled away on exactly `{XX,XY,YX,YY}` — **expected 0.81 → measured 1.0,
    Δ = +0.19**, all else Δ≈0. Crosstalk detected on a real entangler — factorization can't (blended marginals).
    `factorization_test` now gated behind `CBConfig.factorization` (default `False`; on for hardware).
-4. **Rung 4 — N=3.** Same machinery, K-subset Paulis.
+4. **Rung 4 — N=3. ✅** `make_cycle("cz")` → disjoint-pair layer (`range(0, n_qubits-1, 2)`); `make_cycle("H")` →
+   all qubits. Ran G=CZ + bit-flip with the random **K=30 subset of 63**: orbit `expected ≈ measured` for all 30
+   (max |Δ|≈0.02, `F_RC` 0.8651 vs 0.8682), no NaN on weight-3 Paulis. Validated the **K-subset path** + **3-qubit
+   orbits** (idle qubit is a spectator — rotates only on the active pair, e.g. Qiskit `IXX → IYY`, q2 frozen) +
+   noise tensoring. Skipped correlated@N=3 (= N=2 demo + bystander; per-pair correlated is an N≥4/N=10 job).
 
 **Cell deltas:**
 - `make_cycle`: `"cz"` → a layer of **disjoint** CZs on a fixed pairing `(0,1),(2,3),…`; odd qubit idles.
@@ -182,6 +195,7 @@ measured `λ_P` alone, so it transfers directly to IBM (where inject-recover is 
 | F1 | factorization `λ_{A⊗B}=λ_A·λ_B` holds (independent) ✅ N=2 / breaks (correlated ZZ) ✅ Rung 2 | ✅ |
 | O1 | orbit-geomean: CZ `λ_P` = geomean over CZ-orbit (bit-flip, all 15 Paulis) ✅ Rung 3 | ✅ |
 | O2 | crosstalk on CZ: correlated ZZ → measured−baseline = +0.19 on `{XX,XY,YX,YY}`, else ≈0 ✅ | ✅ |
+| S1 | scaling N=3: CZ + bit-flip, random K=30 subset, orbit `expected ≈ measured` (max |Δ|≈0.02) ✅ Rung 4 | ✅ |
 | V4 | reconstruct `p_Q` via inverse Walsh–Hadamard | ⬜ optional, Part B |
 
 > Acceptance tolerances are shot-based (shrink ∝ 1/√(shots·L)) — pin numbers per check as we go.
