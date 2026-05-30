@@ -7,14 +7,6 @@
 
 ## A · Gotchas and fixes
 
-- **`make_cycle("cz")` arg-swap bug.** I wrote `range(0, 2, n_qubits)` — that's
-  `(start=0, stop=2, step=n_qubits)`, which emits only one CZ for any `N`.
-  Coincidentally correct at `N=2` and `N=3`. Fixed to
-  `range(0, n_qubits-1, 2)`. Caught only when prepping for `N=4+`.
-
-- **`make_cycle("H")` only hit q0.** Inconsistent with the `S` branch (which did
-  all qubits). Both fixed in the Rung 4 commit.
-
 - **`m₂ = 12 → 8` for `N≥2`.** At `m₂=12`, low-fidelity weight-2 Paulis
   (e.g. `XX` under biased noise) had `λ^m₂ ≈ 0.7¹² ≈ 1.4%`, below the shot
   floor. The ratio `F_{m₂}/F_{m₁}` went negative → NaN. Shortening to 8 keeps
