@@ -64,10 +64,16 @@ def convert_longtables(text):
     return ''.join(out)
 
 src = convert_longtables(src)
-src = src.replace(r'\end{longtable}', r'\end{tabular}\end{minipage}\par\medskip')
-# Strip longtable-specific commands that don't apply to tabular
-for cmd in (r'\endfirsthead', r'\endhead', r'\endfoot', r'\endlastfoot'):
+# In pandoc's longtable layout, \bottomrule lives in the \endlastfoot block
+# (between \endhead and \endlastfoot) so it's drawn at the end of the LAST
+# page. In a plain tabular it would render at the wrong vertical position
+# (right under the header). Strip the misplaced \bottomrule together with
+# \endlastfoot, then re-emit \bottomrule just before \end{tabular}.
+src = re.sub(r'\\bottomrule\\noalign\{\}\s*\\endlastfoot\s*', '', src)
+src = re.sub(r'\\endlastfoot\s*', '', src)
+for cmd in (r'\endfirsthead', r'\endhead', r'\endfoot'):
     src = re.sub(re.escape(cmd) + r'\s*', '', src)
+src = src.replace(r'\end{longtable}', r'\bottomrule\noalign{}\end{tabular}\end{minipage}\par\medskip')
 
 p.write_text(src)
 print(f"  post-processed {p}")
