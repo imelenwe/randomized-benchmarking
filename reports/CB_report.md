@@ -87,7 +87,7 @@ the rest sit at the shot-noise floor. **That cluster is the crosstalk fingerprin
 |---|---|---|---|
 | 1 | N=1, G=I, 4 indep noises | per-Pauli $\lambda_P$; commute formula on a flat cycle | 0.87–0.95 → 0.87–0.95 |
 | 2 | N=1, G=H, 4 indep noises | H rotates `X↔Z` → preview of orbit-geomean | 0.87–0.95 → 0.86–0.95 |
-| 3 | N=2, G=I, 4 indep noises | factorization `λ_{A⊗B} = λ_A·λ_B` holds | 0.80–0.92 → 0.81–0.92 |
+| 3 | N=2, G=I, 4 indep noises | factorization $\lambda_{A\otimes B} = \lambda_A \cdot \lambda_B$ holds | 0.80–0.92 → 0.81–0.92 |
 | 4 | N=2, G=I, **correlated `ZZ`** | factorization **breaks** on `{XX,XY,YX,YY}` | 0.896 → **0.945** ⚡ |
 | 5 | N=2, G=**CZ**, bit_flip | orbit-geomean predictor on a real entangler | 0.895 → 0.895 |
 | 6 | N=2, G=CZ, **correlated `ZZ`** | crosstalk caught *on the gate* — the payoff | 0.896 → **0.943** ⚡ |
@@ -204,7 +204,7 @@ independent experiments. Three preps, three measurements, three two-length
 ratios → three rows in [Exp 1's table](#exp1-results). (Same K-passes-K-rows logic holds for
 Exp 2–7; K just grows.)
 
-**Noise $\rightarrow \lambda_P$.** Commute formula directly. Predicted triples `(λ_X, λ_Y, λ_Z)`:
+**Noise $\rightarrow \lambda_P$.** Commute formula directly. Predicted triples $(\lambda_X, \lambda_Y, \lambda_Z)$:
 
 | Noise | predicted $(\lambda_X, \lambda_Y, \lambda_Z)$ |
 |---|---|
@@ -262,9 +262,9 @@ mean over the orbit $\{X, Z\}$ — i.e. $\lambda_X^{\text{recovered}} = \sqrt{\l
 | bit_flip | 0.9487 → 0.9463 | 0.9000 → 0.8965 | 0.9487 → 0.9501 | 0.9325 → 0.9310 |
 | biased | 0.8798 → 0.8830 | 0.8400 → 0.8415 | 0.8798 → 0.8702 | 0.8665 → 0.8649 |
 
-**Walking the critical Pauli — dephasing on X.** Bare: `λ_X^bare = 0.90`,
-`λ_Z^bare = 1.00`. Through H, X rotates to Z and back. Orbit `{X, Z}`.
-Predicted `λ_X^recovered = √(0.90 · 1.00) = 0.9487`. **Measured 0.9483.** The
+**Walking the critical Pauli — dephasing on X.** Bare: $\lambda_X^{\text{bare}} = 0.90$,
+$\lambda_Z^{\text{bare}} = 1.00$. Through H, X rotates to Z and back. Orbit $\{X, Z\}$.
+Predicted $\lambda_X^{\text{recovered}} = \sqrt{0.90 \cdot 1.00} = 0.9487$. **Measured 0.9483.** The
 protected `Z` axis is shared with X across the orbit — there is no axis the H
 cycle leaves fully protected.
 
@@ -403,7 +403,7 @@ So CZ has **fixed Paulis** $\{ZI, IZ, ZZ\}$ (every qubit holds an $I$ or $Z$ —
 A single dressed cycle is `(R∘CZ∘Λ)`. After the Pauli twirl, the noise per
 position is $\Lambda_T(P) = \lambda_P \cdot P$ — but CZ rotates `P → P'` between cycles. So the
 observable that started as `P` is, at the next position, `P' = CZ·P·CZ`, which
-acquires `Λ_T(P') = λ_{P'} · P'`. After two cycles, `P' → P` again (orbit length
+acquires $\Lambda_T(P') = \lambda_{P'} \cdot P'$. After two cycles, $P' \to P$ again (orbit length
 2). Over $m$ cycles (m even):
 
 $$
@@ -565,7 +565,7 @@ gap is its strength.**
 
 ### 6.2 · Why $F_{RC}$ inflates instead of dropping
 
-Crosstalk *makes 4 of 15 Paulis look perfect*, and `F_RC = avg λ_P` averages
+Crosstalk *makes 4 of 15 Paulis look perfect*, and $F_{RC} = \mathrm{avg}\,\lambda_P$ averages
 that up:
 
 $$
