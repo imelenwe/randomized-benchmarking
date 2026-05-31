@@ -31,3 +31,7 @@ GitHub's notebook viewer returns "An error occurred" for every `.ipynb` in
 this repo, including a minimal 2-cell test notebook. Repo-level GitHub-side
 issue, not a notebook-content problem. Use the nbviewer / Colab links above
 in the interim.
+
+Tracking with GitHub Support: ticket
+[#4432770](https://support.github.com/ticket/personal/0/4432770) (filed
+2026-05-31).
