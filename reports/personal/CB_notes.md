@@ -89,8 +89,8 @@
 | Qiskit | 1.4.3 |
 | Sim backend | Aer (stabilizer for Pauli channels; density-matrix when needed) |
 | RNG | `np.random.default_rng(42)` shared across the notebook |
-| Code | [`CB.ipynb`](../../CB.ipynb), cells 0–12 (cells 6, 7, 10, 11, 12 produce the report tables) |
-| Spec | [`CB_plan.md`](../../CB_plan.md) |
+| Code | [`CB.ipynb`](../../CB/CB.ipynb), cells 0–12 (cells 6, 7, 10, 11, 12 produce the report tables) |
+| Spec | [`CB_plan.md`](../../CB/CB_plan.md) |
 | Figures source | `/tmp/make_cb_figures.py` — data hard-coded from notebook outputs; rerun to regenerate `reports/figures/*.png` |
 
 GitHub: issues #1–#4 (rungs 1–4 / Exp 1–7) all CLOSED; #5 (N=10), #6 (hardware)

@@ -60,7 +60,7 @@ header-includes:
 > **Notebook:** [`CB.ipynb`](../CB/CB.ipynb) · **Spec:** [`CB_plan.md`](../CB/CB_plan.md)
 > **Scope:** N=1, 2, 3 — 7 experiments
 > **Next:** N=10 stabilizer-sim demo, IBM hardware run
-> **Reader:** assumes the [Randomized Benchmarking](../Randomized%20Benchmarking.pdf) slides (meetings 1–3) for theory. This report is what was built and what it showed.
+> **Reader:** assumes the Randomized Benchmarking slides (meetings 1–3) for theory. This report is what was built and what it showed.
 
 ---
 
@@ -412,7 +412,7 @@ $$
 \;=\; \Big(\sqrt{\lambda_P \cdot \lambda_{P'}}\Big)^m.
 $$
 
-So the **recovered** decay is the geometric mean: `λ_P^recovered = √(λ_P · λ_{P'})`. The two-length ratio measures *this* — the geomean over the orbit.
+So the **recovered** decay is the geometric mean: $\lambda_P^{\text{recovered}} = \sqrt{\lambda_P \cdot \lambda_{P'}}$. The two-length ratio measures *this* — the geomean over the orbit.
 
 **Worked example — $XI$ under bit_flip.** Walk it in three lines:
 
@@ -617,3 +617,275 @@ floor. The data point needed before trying $N=10$ on a stabilizer simulator.
 Working notes (gotchas, bugs caught, deferred items, reproducibility) live at
 [`personal/CB_notes.md`](personal/CB_notes.md) — for my reference, not part of
 this report.
+
+---
+
+## Appendix A · Raw notebook outputs (2026-05-31, sim, seed 42)
+
+Verbatim stream output from `CB/CB.ipynb`, pinned here so the report stays
+self-contained as the notebook is re-run for later experiments (N=10, hardware).
+Numbers cited in sections 5–6 are sourced from these blocks.
+
+Run config: Aer simulator, `rng = np.random.default_rng(42)`, shots = 200,
+m₁ = 4, m₂ = 8, K = 30 (random subset for N ≥ 3, full set otherwise), L = 30
+draws per Pauli.
+
+### A.1 · Exp 1 + Exp 2 — `CB.ipynb` cell 6 (N=1, Cycle I and Cycle H)
+
+```
+==================================================================
+Cycle I (order 1), 1 qubit — expected vs measured λ_P
+
+  depolarizing
+  P      expected  measured        Δ
+  X        0.9500    0.9534  +0.0034
+  Y        0.9500    0.9516  +0.0016
+  Z        0.9500    0.9552  +0.0052
+  F_RC     0.9500    0.9534  +0.0034
+
+  dephasing
+  P      expected  measured        Δ
+  X        0.9000    0.8985  -0.0015
+  Y        0.9000    0.9026  +0.0026
+  Z        1.0000    1.0000  +0.0000
+  F_RC     0.9333    0.9337  +0.0004
+
+  bit_flip
+  P      expected  measured        Δ
+  X        1.0000    1.0000  +0.0000
+  Y        0.9000    0.9052  +0.0052
+  Z        0.9000    0.8950  -0.0050
+  F_RC     0.9333    0.9334  +0.0001
+
+  biased
+  P      expected  measured        Δ
+  X        0.8600    0.8802  +0.0202
+  Y        0.8400    0.8366  -0.0034
+  Z        0.9000    0.9054  +0.0054
+  F_RC     0.8667    0.8740  +0.0074
+==================================================================
+Cycle H (order 2), 1 qubit — expected vs measured λ_P
+
+  depolarizing
+  P      expected  measured        Δ
+  X        0.9500    0.9488  -0.0012
+  Y        0.9500    0.9563  +0.0063
+  Z        0.9500    0.9561  +0.0061
+  F_RC     0.9500    0.9537  +0.0037
+
+  dephasing
+  P      expected  measured        Δ
+  X        0.9487    0.9483  -0.0004
+  Y        0.9000    0.8861  -0.0139
+  Z        0.9487    0.9473  -0.0014
+  F_RC     0.9325    0.9272  -0.0052
+
+  bit_flip
+  P      expected  measured        Δ
+  X        0.9487    0.9463  -0.0024
+  Y        0.9000    0.8965  -0.0035
+  Z        0.9487    0.9501  +0.0014
+  F_RC     0.9325    0.9310  -0.0015
+
+  biased
+  P      expected  measured        Δ
+  X        0.8798    0.8830  +0.0032
+  Y        0.8400    0.8415  +0.0015
+  Z        0.8798    0.8702  -0.0095
+  F_RC     0.8665    0.8649  -0.0016
+```
+
+### A.2 · Exp 3 + Exp 4 — `CB.ipynb` cell 7 (N=2, Cycle I, all noise types)
+
+```
+==================================================================
+Cycle I (order 1), 2 qubit — expected vs measured λ_P
+
+  depolarizing
+  P      expected  measured        Δ
+  IX       0.9500    0.9467  -0.0033
+  IY       0.9500    0.9460  -0.0040
+  IZ       0.9500    0.9569  +0.0069
+  XI       0.9500    0.9498  -0.0002
+  XX       0.9025    0.9011  -0.0014
+  XY       0.9025    0.9095  +0.0070
+  XZ       0.9025    0.8990  -0.0035
+  YI       0.9500    0.9549  +0.0049
+  YX       0.9025    0.9078  +0.0053
+  YY       0.9025    0.9047  +0.0022
+  YZ       0.9025    0.9033  +0.0008
+  ZI       0.9500    0.9571  +0.0071
+  ZX       0.9025    0.8985  -0.0040
+  ZY       0.9025    0.9033  +0.0008
+  ZZ       0.9025    0.9005  -0.0020
+  F_RC     0.9215    0.9226  +0.0011
+
+  dephasing
+  P      expected  measured        Δ
+  IX       0.9000    0.9003  +0.0003
+  IY       0.9000    0.8953  -0.0047
+  IZ       1.0000    1.0000  +0.0000
+  XI       0.9000    0.9041  +0.0041
+  XX       0.8100    0.8058  -0.0042
+  XY       0.8100    0.8051  -0.0049
+  XZ       0.9000    0.9006  +0.0006
+  YI       0.9000    0.8973  -0.0027
+  YX       0.8100    0.8097  -0.0003
+  YY       0.8100    0.8002  -0.0098
+  YZ       0.9000    0.8959  -0.0041
+  ZI       1.0000    1.0000  +0.0000
+  ZX       0.9000    0.8964  -0.0036
+  ZY       0.9000    0.9123  +0.0123
+  ZZ       1.0000    1.0000  +0.0000
+  F_RC     0.8960    0.8949  -0.0011
+
+  bit_flip
+  P      expected  measured        Δ
+  IX       1.0000    1.0000  +0.0000
+  IY       0.9000    0.8989  -0.0011
+  IZ       0.9000    0.9047  +0.0047
+  XI       1.0000    1.0000  +0.0000
+  XX       1.0000    1.0000  +0.0000
+  XY       0.9000    0.9048  +0.0048
+  XZ       0.9000    0.9069  +0.0069
+  YI       0.9000    0.9003  +0.0003
+  YX       0.9000    0.9046  +0.0046
+  YY       0.8100    0.8318  +0.0218
+  YZ       0.8100    0.8062  -0.0038
+  ZI       0.9000    0.9018  +0.0018
+  ZX       0.9000    0.8996  -0.0004
+  ZY       0.8100    0.8098  -0.0002
+  ZZ       0.8100    0.8098  -0.0002
+  F_RC     0.8960    0.8986  +0.0026
+
+  biased
+  P      expected  measured        Δ
+  IX       0.8600    0.8610  +0.0010
+  IY       0.8400    0.8235  -0.0165
+  IZ       0.9000    0.8993  -0.0007
+  XI       0.8600    0.8699  +0.0099
+  XX       0.7396    0.7770  +0.0374
+  XY       0.7224    0.7302  +0.0078
+  XZ       0.7740    0.7600  -0.0140
+  YI       0.8400    0.8526  +0.0126
+  YX       0.7224    0.7908  +0.0684
+  YY       0.7056    0.6925  -0.0131
+  YZ       0.7560    0.7621  +0.0061
+  ZI       0.9000    0.8985  -0.0015
+  ZX       0.7740    0.7772  +0.0032
+  ZY       0.7560    0.7991  +0.0431
+  ZZ       0.8100    0.8193  +0.0093
+  F_RC     0.7973    0.8075  +0.0102
+
+  correlated_ZZ
+  P      expected  measured        Δ
+  IX       0.9000    0.9055  +0.0055
+  IY       0.9000    0.8927  -0.0073
+  IZ       1.0000    1.0000  +0.0000
+  XI       0.9000    0.8890  -0.0110
+  XX       0.8100    1.0000  +0.1900
+  XY       0.8100    1.0000  +0.1900
+  XZ       0.9000    0.9030  +0.0030
+  YI       0.9000    0.8922  -0.0078
+  YX       0.8100    1.0000  +0.1900
+  YY       0.8100    1.0000  +0.1900
+  YZ       0.9000    0.8847  -0.0153
+  ZI       1.0000    1.0000  +0.0000
+  ZX       0.9000    0.8966  -0.0034
+  ZY       0.9000    0.9065  +0.0065
+  ZZ       1.0000    1.0000  +0.0000
+  F_RC     0.8960    0.9447  +0.0487
+```
+
+### A.3 · Exp 5 — `CB.ipynb` cell 10 (N=2, Cycle CZ, bit_flip)
+
+```
+==================================================================
+Cycle cz (order 2), 2 qubit — expected vs measured λ_P
+
+  bit_flip
+  P      expected  measured        Δ
+  IX       0.9487    0.9428  -0.0059
+  IY       0.8538    0.8593  +0.0055
+  IZ       0.9000    0.8992  -0.0008
+  XI       0.9487    0.9499  +0.0012
+  XX       0.9000    0.9069  +0.0069
+  XY       0.9000    0.9093  +0.0093
+  XZ       0.9487    0.9492  +0.0006
+  YI       0.8538    0.8492  -0.0046
+  YX       0.9000    0.9011  +0.0011
+  YY       0.9000    0.8980  -0.0020
+  YZ       0.8538    0.8533  -0.0005
+  ZI       0.9000    0.8870  -0.0130
+  ZX       0.9487    0.9456  -0.0030
+  ZY       0.8538    0.8611  +0.0072
+  ZZ       0.8100    0.8133  +0.0033
+  F_RC     0.8947    0.8950  +0.0003
+```
+
+### A.4 · Exp 6 — `CB.ipynb` cell 11 (N=2, Cycle CZ, correlated `ZZ`)
+
+```
+==================================================================
+Cycle cz (order 2), 2 qubit — expected vs measured λ_P
+
+  correlated_ZZ
+  P      expected  measured        Δ
+  IX       0.9000    0.8964  -0.0036
+  IY       0.9000    0.9056  +0.0056
+  IZ       1.0000    1.0000  +0.0000
+  XI       0.9000    0.8959  -0.0041
+  XX       0.8100    1.0000  +0.1900
+  XY       0.8100    1.0000  +0.1900
+  XZ       0.9000    0.8938  -0.0062
+  YI       0.9000    0.8889  -0.0111
+  YX       0.8100    1.0000  +0.1900
+  YY       0.8100    1.0000  +0.1900
+  YZ       0.9000    0.8915  -0.0085
+  ZI       1.0000    1.0000  +0.0000
+  ZX       0.9000    0.8909  -0.0091
+  ZY       0.9000    0.8883  -0.0117
+  ZZ       1.0000    1.0000  +0.0000
+  F_RC     0.8960    0.9434  +0.0474
+```
+
+### A.5 · Exp 7 — `CB.ipynb` cell 12 (N=3, Cycle CZ, bit_flip — K=30 of 63)
+
+```
+==================================================================
+Cycle cz (order 2), 3 qubit — expected vs measured λ_P
+
+  bit_flip
+  P      expected  measured        Δ
+  YXI      0.8538    0.8696  +0.0158
+  XZX      0.9487    0.9339  -0.0147
+  IZZ      0.8100    0.7998  -0.0102
+  ZII      0.9000    0.8912  -0.0088
+  YXY      0.8100    0.8385  +0.0285
+  ZYX      0.8100    0.8298  +0.0198
+  IZY      0.8538    0.8532  -0.0007
+  XZI      0.9000    0.9100  +0.0100
+  ZZY      0.7684    0.7689  +0.0004
+  IXZ      0.9487    0.9534  +0.0047
+  ZYZ      0.7684    0.7824  +0.0140
+  XYX      0.9000    0.9033  +0.0033
+  IZI      0.9000    0.9019  +0.0019
+  XYZ      0.8538    0.8551  +0.0013
+  YIZ      0.8100    0.7924  -0.0176
+  XXZ      0.9487    0.9480  -0.0007
+  YYI      0.7684    0.7702  +0.0018
+  YYZ      0.7684    0.7979  +0.0294
+  ZXI      0.8538    0.8603  +0.0065
+  ZZZ      0.7290    0.7171  -0.0119
+  IZX      0.9487    0.9553  +0.0066
+  IIY      0.8538    0.8444  -0.0094
+  YZZ      0.7290    0.7716  +0.0426
+  XII      1.0000    1.0000  +0.0000
+  XIY      0.8538    0.8480  -0.0058
+  ZYY      0.8100    0.8171  +0.0071
+  IYZ      0.8538    0.8765  +0.0227
+  YYY      0.8100    0.8409  +0.0309
+  YXZ      0.8538    0.8471  -0.0067
+  ZIX      0.8538    0.8544  +0.0006
+  F_RC     0.8490    0.8544  +0.0054
+```
