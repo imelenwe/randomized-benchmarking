@@ -59,7 +59,7 @@ header-includes:
 > **Project:** Cycle Benchmarking
 > **Notebook:** [`CB.ipynb`](../CB/CB.ipynb) · **Spec:** [`CB_plan.md`](../CB/CB_plan.md)
 > **Scope:** N=1, 2, 3 — 7 experiments
-> **Next:** N=10 stabilizer-sim demo, IBM hardware run
+> **Next:** IBM hardware run
 > **Reader:** assumes the Randomized Benchmarking slides (meetings 1–3) for theory. This report is what was built and what it showed.
 
 ---
@@ -157,11 +157,11 @@ derivation in Exp 5.
 | Detector | What it does (in one line) | Where used |
 |---|---|---|
 | **orbit-geomean predictor** | Given the *injected* noise, predicts what $\lambda_P$ *should* be. Compare to measured: a gap = bug (or crosstalk). | simulator (we know the noise) |
-| **`factorization_test`** | Checks whether the joint $\lambda_{A \otimes B}$ equals the product of single-qubit $\lambda$'s. No noise info needed. | hardware (works on identity cycle; needs orbit-aware fix for CZ — open under #6) |
+| **`factorization_test`** | Checks whether the joint $\lambda_{A \otimes B}$ equals the product of single-qubit $\lambda$'s. No noise info needed. | hardware (works on identity cycle; needs orbit-aware fix for CZ — open under #5) |
 
 In sim the orbit predictor is the honest yardstick. Factorization will become the
 hardware self-consistency check once an orbit-aware fix lands for rotating gates
-(open for #6).
+(open for #5).
 
 ---
 
@@ -603,7 +603,7 @@ Exp 7 is the first run that touches the three pieces that only appear at $N \geq
 the K-subset path (30 of 63 Paulis), 3-qubit orbits with a spectator qubit,
 and 3-qubit noise tensoring. All three behaved. No NaN at $m_2 = 8$ — the
 lowest expected $\lambda_P$ was $0.729$ (on $ZZZ$/$YZZ$), well above the shot
-floor. The data point needed before trying $N=10$ on a stabilizer simulator.
+floor.
 
 ---
 
@@ -611,8 +611,7 @@ floor. The data point needed before trying $N=10$ on a stabilizer simulator.
 
 | Issue | Task | Blocker |
 |---|---|---|
-| **#5** | N=10 stabilizer-sim demo | labelled `UnitaryGate` doesn't run on the stabilizer backend → rebuild cycle from native Cliffords (`qc.cz`) and re-attach noise; add per-pair correlated `ZZ` with non-uniform marginals; plot $F_{RC}$ vs N |
-| **#6** | IBM hardware run | swap Aer → `QiskitRuntimeService` SamplerV2; turn `factorization=True`; needs orbit-aware fix to `factorization_test` for rotating gates |
+| **#5** | IBM hardware run | **Stage 2 done** (FakeFez Heron snapshot — see A.6/A.7; $F_{RC}$ tracks calibrated `cz_err` within 0.4% on noisy pair, within 0.07% on clean). Stage 3 (real `ibm_fez`) deferred — pending QPU budget and Session/Batch tuning. |
 
 Working notes (gotchas, bugs caught, deferred items, reproducibility) live at
 [`personal/CB_notes.md`](personal/CB_notes.md) — for my reference, not part of
@@ -620,15 +619,22 @@ this report.
 
 ---
 
-## Appendix A · Raw notebook outputs (2026-05-31, sim, seed 42)
+## Appendix A · Raw notebook outputs
 
 Verbatim stream output from `CB/CB.ipynb`, pinned here so the report stays
-self-contained as the notebook is re-run for later experiments (N=10, hardware).
+self-contained as the notebook is re-run for later experiments (hardware).
 Numbers cited in sections 5–6 are sourced from these blocks.
 
-Run config: Aer simulator, `rng = np.random.default_rng(42)`, shots = 200,
-m₁ = 4, m₂ = 8, K = 30 (random subset for N ≥ 3, full set otherwise), L = 30
-draws per Pauli.
+**Sim runs (A.1–A.5)** — 2026-05-31, Aer simulator, `rng = np.random.default_rng(42)`,
+shots = 200, $m_1 = 4$, $m_2 = 8$, $K = 30$ (random subset for $N \geq 3$,
+full set otherwise), $L = 30$ draws per Pauli.
+
+**Hardware-staging runs (A.6–A.7)** — 2026-06-02, FakeFez (IBM Heron r2, 156 qubits,
+native basis `{rz, sx, x, cz, id, measure}`), `rng = np.random.default_rng(42)`,
+shots = 200, $m_1 = 4$, $m_2 = 8$, $K = 15$ (all 2-qubit non-identity Paulis),
+$L = 5$ draws per Pauli, `factorization=True` (factorization test ON).
+Pair selection via `pick_cz_gate_pairs(fez)` — noisy pair `[153, 154]` with
+calibrated `cz_err = 0.0500`, clean pair `[22, 23]` with `cz_err = 0.0021`.
 
 ### A.1 · Exp 1 + Exp 2 — `CB.ipynb` cell 6 (N=1, Cycle I and Cycle H)
 
@@ -888,4 +894,78 @@ Cycle cz (order 2), 3 qubit — expected vs measured λ_P
   YXZ      0.8538    0.8471  -0.0067
   ZIX      0.8538    0.8544  +0.0006
   F_RC     0.8490    0.8544  +0.0054
+```
+
+### A.6 · FakeFez noisy pair `[153, 154]` — `CB.ipynb` cell 14 (live `cz_err = 0.0500`)
+
+```
+==================================================================
+Cycle cz on fake_fez, qubits [153, 154] noisy
+
+  fake_fez/[153, 154]
+  P      measured
+  IX       0.9896
+  IY       0.9249
+  IZ       1.0065
+  XI       0.9408
+  XX       0.9198
+  XY       0.9155
+  XZ       0.9480
+  YI       0.9022
+  YX       0.9423
+  YY       0.9272
+  YZ       0.9552
+  ZI       0.9279
+  ZX       0.9814
+  ZY       0.9486
+  ZZ       0.9683
+  F_RC     0.9465
+  F_RC: 0.9465 vs IBM's CZ error 0.0500
+  P           λ_P   P-margins        Δ
+  XX       0.9198      0.9310  -0.0112
+  XY       0.9155      0.8701  +0.0454
+  XZ       0.9480      0.9469  +0.0011
+  YX       0.9423      0.8928  +0.0495
+  YY       0.9272      0.8344  +0.0928
+  YZ       0.9552      0.9080  +0.0471
+  ZX       0.9814      0.9183  +0.0630
+  ZY       0.9486      0.8582  +0.0904
+  ZZ       0.9683      0.9340  +0.0343
+```
+
+### A.7 · FakeFez clean pair `[22, 23]` — `CB.ipynb` cell 14 (live `cz_err = 0.0021`)
+
+```
+==================================================================
+Cycle cz on fake_fez, qubits [22, 23] clean
+
+  fake_fez/[22, 23]
+  P      measured
+  IX       0.9944
+  IY       0.9964
+  IZ       0.9928
+  XI       0.9990
+  XX       0.9969
+  XY       0.9985
+  XZ       0.9911
+  YI       1.0005
+  YX       0.9995
+  YY       0.9974
+  YZ       0.9974
+  ZI       0.9975
+  ZX       1.0016
+  ZY       1.0010
+  ZZ       0.9943
+  F_RC     0.9972
+  F_RC: 0.9972 vs IBM's CZ error 0.0021
+  P           λ_P   P-margins        Δ
+  XX       0.9969      0.9933  +0.0035
+  XY       0.9985      0.9954  +0.0031
+  XZ       0.9911      0.9918  -0.0007
+  YX       0.9995      0.9949  +0.0046
+  YY       0.9974      0.9969  +0.0005
+  YZ       0.9974      0.9933  +0.0041
+  ZX       1.0016      0.9918  +0.0097
+  ZY       1.0010      0.9939  +0.0072
+  ZZ       0.9943      0.9903  +0.0041
 ```
