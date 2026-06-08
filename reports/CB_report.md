@@ -1,7 +1,7 @@
 ---
 title: "Cycle Benchmarking Report"
-subtitle: "N=1, 2, 3 — seven experiments"
-date: "2026-05-30"
+subtitle: "N=1, 2, 3 — nine experiments incl. FakeFez staging + real ibm_fez"
+date: "2026-06-08"
 geometry: margin=1.8cm
 fontsize: 11pt
 documentclass: article
@@ -103,7 +103,7 @@ the rest sit at the shot-noise floor. **That cluster is the crosstalk fingerprin
 | 8 | N=2, G=CZ, **FakeFez staging** | CB recovers IBM's `cz_err` on a known snapshot | noisy [153,154]: CB 5.35% vs IBM 5.00%; clean: CB 0.28% vs IBM 0.21% |
 | 9 | N=2, G=CZ, **real `ibm_fez` [38, 49]** | CB finds correlated noise that `cz_err` misses | CB 8.50% vs IBM 5.03% — **+3.5 percentage-point gap** ⚡ |
 
-![$F_{RC}$ across all 7 experiments (each bar pair = one noise channel)](figures/03_frc_summary.png)
+![$F_{RC}$ across the 7 sim experiments (each bar pair = one noise channel; hardware Exp 8/9 not shown — see §5 tables)](figures/03_frc_summary.png)
 
 The two **red** bars are the correlated-noise runs (Exp 4 and Exp 6).
 Measured $F_{RC}$ sits ~5% *above* the predicted baseline — averaging over Paulis
