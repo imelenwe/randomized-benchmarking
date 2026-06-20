@@ -815,12 +815,34 @@ joints. That matches the measured fingerprint qualitatively: $XX$ dominant
 negative, $YY$/$YZ$ secondary negative, $XY$/$XZ$ slightly positive,
 Z-block silent.
 
-A coherent over-rotation cannot be distinguished from a correlated bit-flip
-channel by $\lambda_P$ alone — both produce the same Pauli-channel signature.
-Distinguishing the two requires a second experiment with a different cycle:
-**cycle benchmarking with $G = I$ on the same pair** would isolate the
-entangling-gate-specific contribution by subtracting the identity-cycle
-$\Delta$ from $G = CZ$'s. That is a natural follow-up; not pursued here.
+**Note: how "expected" is computed, and two caveats.**
+
+The "expected" column isn't a separately assumed model — it's the product
+of *measured* single-qubit marginals from this same run. For $X \otimes X$:
+
+$$\lambda_{XX}^{\text{expected}} = \lambda_{XI}^{\text{measured}} \cdot \lambda_{IX}^{\text{measured}} = 0.9075 \cdot 0.9936 = 0.9017.$$
+
+So the assumption smuggled in is **independence between the two qubits'
+noise** (not "dephasing per qubit"). The factorization test deliberately
+treats independence as a null hypothesis; a large $\Delta$ falsifies it.
+
+Two genuine weaknesses of this baseline:
+
+1. **Not orbit-corrected.** Under CZ, $\lambda_{XI}$ is itself a geomean
+   over the $\{XI, XZ\}$ orbit and $\lambda_{XX}$ over $\{XX, YY\}$ (§6.3).
+   The product $\lambda_{XI} \cdot \lambda_{IX}$ mixes geomeans over
+   *different* orbits. On the clean pair the resulting mismatch was
+   $\leq 1$ pp, so it cannot explain the $-48$ pp on $XX$ — but it does
+   mean the baseline is principle-wrong by a small amount.
+2. **"Correlated" $\neq$ "what kind."** A large $\Delta$ rules out
+   independence; it does not by itself distinguish correlated stochastic
+   noise from coherent over-rotation — both produce the same Pauli-channel
+   signature. The shape argument above (negative $\Delta_{XX}$, Z-block
+   silent) leans toward coherent, but distinguishing the two cleanly needs
+   a second experiment: cycle benchmarking with $G = I$ on the same pair,
+   subtracting its $\Delta$ from $G = CZ$'s to isolate the
+   entangling-gate-specific contribution. That is a natural follow-up;
+   not pursued here.
 
 ### 6.6 · Why FakeFez agreed with IBM but real Fez did not
 
