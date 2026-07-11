@@ -3,3 +3,7 @@
 
 # generated CB sweep data (regenerable via sweep())
 DiffusionCB/data/
+
+# python bytecode cache
+__pycache__/
+*.pyc
