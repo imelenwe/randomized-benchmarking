@@ -1,2 +1,5 @@
 .DS_Store
 .env
+
+# generated CB sweep data (regenerable via sweep())
+DiffusionCB/data/
