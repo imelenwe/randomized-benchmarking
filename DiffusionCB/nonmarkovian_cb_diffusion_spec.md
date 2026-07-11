@@ -3,7 +3,7 @@
 **Author:** Lnv, supervised by Prof. Bijita; collaboration with Prof. Sanghka, IIT Hyderabad
 **Spec owner:** Claude Code (maintained from 2026-07-06; full ownership delegated by Lnv)
 **Date:** July 2026
-**Status:** Problem definition / pre-implementation spec — Phase 0 not yet started
+**Status:** Phase 1 in progress — generator + data factory complete; discriminability study (Step 5) underway (5a, 5b done). See **Progress tracker** below.
 **Intended use:** Working spec for implementation with Claude Code
 
 ---
@@ -13,12 +13,43 @@
 Every change to this spec is logged here as a checkbox. Unchecked = agreed but not yet
 written into the body; checked = applied. Newest at top.
 
+- [x] **2026-07-11** — Added **Progress tracker** (green-ticked task list) after this log; updated Status to "Phase 1 in progress". Logged as done: Phase 0, the S+E generator, the three classes (**memory**/**jitter**/**drift** — the vivid names for non-Markovian/stochastic-Markovian/coherent), the parquet data factory, and Step 5a/5b. Key finding: at closely-matched λ, memory's `Var_l(f)` exceeds jitter's and grows super-linearly with `m` (5b) — the first raw-data discriminator; shot-noise floor is ≤~1% of the signal at large `m`.
 - [x] **2026-07-06** — Reframed project as **simulation-based inference (SBI)**; diffusion demoted from "the method" to "one estimator choice, selected *after* the Phase-2 target" (§1, §3.3, §4).
 - [x] **2026-07-06** — Renumbered phases to **Phase 0–4** with an explicit **gate** on each; split the old Phase 1 into Phase 0 (clone/scaffold) + Phase 1 (generator + discriminability) so the discriminability check is its own gate (§4).
 - [x] **2026-07-06** — Added **§5 Phase-1 detailed design**: quantum S+E collision-model generator, matched-marginal three-class constraint, density-matrix (not stabilizer) backend, CB-only, per-sequence-shot-count data schema, checkpoint discipline.
 - [x] **2026-07-06** — Added **§6 How we use the process tensor**: for data generation we propagate the joint S+E state (collision model); the process tensor is never instantiated — it is the *inference target's parameterization*, not the simulator.
 - [x] **2026-07-06** — Elevated the **plain-statistics discriminability study** to the make-or-break first experiment, run *before* any neural network, providing the baseline the learned model must beat (§4 Phase 1, §5.3).
 - [x] **2026-07-06** — Recorded the two locked design decisions (noise backend = quantum S+E collision model; data granularity = per-sequence shot counts) in §5.
+
+---
+
+## Progress tracker
+
+Legend: ✅ done · 🔄 in progress · ⬜ not started.
+Class names: **memory** = non-Markovian · **jitter** = stochastic-Markovian · **drift** = coherent.
+
+**Phase 0 — Clone & scaffold** ✅
+- ✅ CB harness lifted into `DiffusionCB/`; λ_P oracle reproduced end-to-end (gate passed)
+
+**Phase 1 — Forward model + discriminability** 🔄
+- ✅ S+E collision-model generator — `couple_with_env` (PRX Eq. 24 `H`), `U_SE` each cycle, E carried
+- ✅ Three classes: **memory** (E carried) · **jitter** (reset E each cycle) · **drift** (`RX(ε)` on S, no E)
+- ✅ Raw per-sequence data retained; parquet **data factory** (`sweep` → `data/*.parquet`; pilot = 24 runs, 12 960 rows)
+- ✅ Code split: `cb_harness.py` (engine) · `generate_data.ipynb` (drivers+plots) · `analyse_data.ipynb` (Step 5)
+- 🔄 **Discriminability study (Step 5, no neural net):**
+    - ✅ **5a** baseline `F_{P,m}` + λ_P — equal-param ≠ equal-noise; must compare at **matched λ**
+    - ✅ **5b** spread `Var_l(f)` — memory > jitter, grows with `m` (**first raw-data fingerprint**; strong in Y/Z)
+    - 🔄 **5b rigor** — subtract binomial shot-noise floor (≤~1% at large `m`; story unchanged)
+    - ⬜ **5b quantify** — reduce to one number (Var-vs-`m` slope, or memory/jitter ratio)
+    - ⬜ **5c** cross-Pauli structure (the drift-vs-memory separator)
+    - ⬜ **5d** verdict / cluster plot at matched λ (the paper figure)
+- ⬜ Exact matched-λ calibration (memory vs jitter currently ~0.03 apart)
+- ⬜ Drift regen at larger ε to reach matched λ (currently λ≈0.99 — too weak to compare)
+- 🔄 **Gate:** do the classes separate above shot noise? → **yes so far** for memory vs jitter (5b)
+
+**Phase 2 — Define the inference target** ⬜
+**Phase 3 — Build the estimator (SBI)** ⬜
+**Phase 4 — Real hardware** ⬜
 
 ---
 
