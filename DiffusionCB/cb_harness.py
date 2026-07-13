@@ -300,7 +300,7 @@ def plot_decay(record_runs, cfg, title=""):
 
 def run_once(P, m, cfg, G_map, G_gate, sampler):
     # this f_pml = Tr[C(P), C̃(ρ)] is the core of the protocol: one random sequence, one shot at the overlap
-    random_paulis = ["".join(cfg.rng.choice(list("IXYZ"), cfg.n_sys_qubits)) for _ in range(m+1)]
+    random_paulis = ["".join(cfg.rng.choice(list("IXYZ"), cfg.n_sys_qubits)) for _ in range(m+1)] # for each loop picks one ramdom pauli from I, X, Y, Z
 
     run_qc = build_real_circuit(P, m, random_paulis, cfg, G_gate)
     
