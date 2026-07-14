@@ -10,6 +10,9 @@ DiffusionCB/data_diffusion/
 # generation run logs
 *.log
 
+# personal ML-context doc for Claude (not the tracked spec, which is nonmarkovian_cb_*.md)
+DiffusionCB/context_for_claude_code.md
+
 # python bytecode cache
 __pycache__/
 *.pyc

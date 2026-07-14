@@ -35,7 +35,7 @@ Class names: **memory** = non-Markovian · **jitter** = stochastic-Markovian · 
 - ✅ S+E collision-model generator — `couple_with_env` (PRX Eq. 24 `H`), `U_SE` each cycle, E carried
 - ✅ Three classes: **memory** (E carried) · **jitter** (reset E each cycle) · **drift** (`RX(ε)` on S, no E)
 - ✅ Raw per-sequence data retained; parquet **data factory** (`sweep` → `data/*.parquet`; pilot = 24 runs, 12 960 rows)
-- ✅ Code split: `cb_harness.py` (engine) · `generate_data.ipynb` (drivers+plots) · `analyse_data.ipynb` (Step 5)
+- ✅ Code split: `cb_harness.py` (engine) · `generate_cb_data.ipynb` (drivers+plots) · `analyze_noise_separability.ipynb` (Step 5)
 - 🔄 **Discriminability study (Step 5, no neural net):**
     - ✅ **5a** baseline `F_{P,m}` + λ_P — equal-param ≠ equal-noise; must compare at **matched λ**
     - ✅ **5b** spread `Var_l(f)` — memory > jitter, grows with `m` (**first raw-data fingerprint**; strong in Y/Z)

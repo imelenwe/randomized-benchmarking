@@ -5,7 +5,7 @@ Definitions only (no drivers, no plots that render). Import with:
 Holds: CBConfig, noise builders (couple_with_env, make_drift, make_noise),
 cycle/Pauli builders, circuit builders, run_once/run_cb, the analysis helpers
 (get_expectation_value, lambda_from_records, plot_decay), records_to_dataframe,
-noise_knobs, and sweep. Drivers live in generate_data.ipynb.
+noise_knobs, and sweep. Drivers live in generate_cb_data.ipynb.
 """
 
 # ── Cell 1 — Imports ──────────────────────────────────────────────────
