@@ -4,6 +4,12 @@
 # generated CB sweep data (regenerable via sweep())
 DiffusionCB/data/
 
+# continuous-dial data for diffusion (regenerable via sweep_for_diffusion())
+DiffusionCB/data_diffusion/
+
+# generation run logs
+*.log
+
 # python bytecode cache
 __pycache__/
 *.pyc

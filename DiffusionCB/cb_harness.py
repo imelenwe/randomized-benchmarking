@@ -445,3 +445,30 @@ def sweep(classes, params, seeds, base, data_dir=DATA_DIR):
                          "param_value": param, "seed": seed}
                 records_to_dataframe(rec, label).to_parquet(fname)
                 print("saved:", fname.name)
+
+
+def sweep_for_diffusion(noise_class, n_runs, delta_range, base,
+                        data_dir=Path("data_diffusion"), draw_seed=0):
+    data_dir.mkdir(parents=True, exist_ok=True)
+    sampler  = AerSampler()
+    draw_rng = np.random.default_rng(draw_seed)          # rng that picks the δ values
+    for i in range(n_runs):
+        param = float(draw_rng.uniform(*delta_range))    # draw FIRST → i↔δ stays stable on resume
+        fname = data_dir / f"{noise_class}_run{i:04d}_delta{param:.4f}.parquet"
+        if fname.exists():
+            print("skip (done):", fname.name); continue
+
+        cfg = CBConfig(n_sys_qubits=base["n_sys_qubits"], shots=base["shots"],
+                       m_list=base["m_list"], L=base["L"], K=base["K"],
+                       label="CB_Cycle", rng=np.random.default_rng(i),
+                       **noise_knobs(noise_class, param))
+        paulis  = make_paulis(cfg.n_sys_qubits, cfg.rng, cfg.K)
+        Gmap, _ = make_cycle(base["cycle"], cfg.n_sys_qubits)
+        Ggate   = UnitaryGate(Operator(Gmap).data, label=cfg.label)
+        rec     = run_cb(paulis, cfg, Gmap, Ggate, sampler)
+
+        label = {"noisetype": noise_class, "param": PARAM_NAME[noise_class],
+                 "param_value": param, "seed": i}
+        records_to_dataframe(rec, label).to_parquet(fname)
+        print(f"saved {fname.name}  (δ={param:.4f})")
+
