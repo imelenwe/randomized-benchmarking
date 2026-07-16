@@ -337,17 +337,19 @@ eigenvalue = (+1 or −1) × (+1 or −1) × ...   over P's support
     
 '''
 
-def run_cb(paulis_K, cfg, G_map, G_gate, sampler):
+def run_cb(paulis_K, cfg, G_map, G_gate, sampler, quiet=False):
     record_runs = {}
     t0 = time.time()
-    print("==================================================================")
-    print(f"Running for {len(paulis_K)} Paulis: {paulis_K}")
+    if not quiet:
+        print("==================================================================")
+        print(f"Running for {len(paulis_K)} Paulis: {paulis_K}")
     for i, P in enumerate(paulis_K):
         record_runs[P] = {} # dict within dict to store results for each P
         for m in (cfg.m_list):
             record_runs[P][m] = [run_once(P, m, cfg, G_map, G_gate, sampler) for _ in range(cfg.L)]
-        elapsed = time.time()-t0
-        print(f"[{i+1:>2}/{len(paulis_K)}] P={P:<3}  m={list(record_runs[P])} × {cfg.L} seqs [L]  (elapsed {elapsed:.1f}s)", flush=True)
+        if not quiet:
+            elapsed = time.time()-t0
+            print(f"[{i+1:>2}/{len(paulis_K)}] P={P:<3}  m={list(record_runs[P])} × {cfg.L} seqs [L]  (elapsed {elapsed:.1f}s)", flush=True)
 
     return record_runs
 
@@ -448,15 +450,16 @@ def sweep(classes, params, seeds, base, data_dir=DATA_DIR):
 
 
 def sweep_for_diffusion(noise_class, n_runs, delta_range, base,
-                        data_dir=Path("data_diffusion"), draw_seed=0):
+                        data_dir=Path("data_diffusion"), draw_seed=0, log_every=200):
     data_dir.mkdir(parents=True, exist_ok=True)
     sampler  = AerSampler()
     draw_rng = np.random.default_rng(draw_seed)          # rng that picks the δ values
+    made = skipped = 0
     for i in range(n_runs):
         param = float(draw_rng.uniform(*delta_range))    # draw FIRST → i↔δ stays stable on resume
         fname = data_dir / f"{noise_class}_run{i:04d}_delta{param:.4f}.parquet"
         if fname.exists():
-            print("skip (done):", fname.name); continue
+            skipped += 1; continue
 
         cfg = CBConfig(n_sys_qubits=base["n_sys_qubits"], shots=base["shots"],
                        m_list=base["m_list"], L=base["L"], K=base["K"],
@@ -465,10 +468,14 @@ def sweep_for_diffusion(noise_class, n_runs, delta_range, base,
         paulis  = make_paulis(cfg.n_sys_qubits, cfg.rng, cfg.K)
         Gmap, _ = make_cycle(base["cycle"], cfg.n_sys_qubits)
         Ggate   = UnitaryGate(Operator(Gmap).data, label=cfg.label)
-        rec     = run_cb(paulis, cfg, Gmap, Ggate, sampler)
+        rec     = run_cb(paulis, cfg, Gmap, Ggate, sampler, quiet=True)   # no per-run spam
 
         label = {"noisetype": noise_class, "param": PARAM_NAME[noise_class],
                  "param_value": param, "seed": i}
         records_to_dataframe(rec, label).to_parquet(fname)
-        print(f"saved {fname.name}  (δ={param:.4f})")
+        made += 1
+        if made % log_every == 0:                        # progress every log_every NEW runs
+            print(f"[{i+1}/{n_runs}] made {made} new, skipped {skipped}  (last δ={param:.4f})", flush=True)
+
+    print(f"DONE sweep: made {made} new, skipped {skipped} existing -> {data_dir}", flush=True)
 
