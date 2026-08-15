@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DiffusionCB — Navigation Index</title>
+<style>
+  :root {
+    --bg: #12151b; --surface: #1a1f28; --surface-border: #2a3140;
+    --text: #eef1f6; --text-dim: #8b96a8; --team-a: #f2a541; --team-b: #4fc3c9;
+    --accent: #f2a541;
+  }
+  :root[data-theme="light"] {
+    --bg: #eef1f5; --surface: #ffffff; --surface-border: #d8dee6;
+    --text: #1a1f28; --text-dim: #5b6472; --team-a: #d9820f; --team-b: #1f8f96;
+    --accent: #b8690a;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #12151b; --surface: #1a1f28; --surface-border: #2a3140;
+      --text: #eef1f6; --text-dim: #8b96a8; --team-a: #f2a541; --team-b: #4fc3c9; --accent: #f2a541;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: -apple-system, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    display: flex; justify-content: center; padding: 52px 20px 80px; margin: 0;
+  }
+  .page { width: 100%; max-width: 700px; display: flex; flex-direction: column; gap: 40px; }
+  .eyebrow { font-family: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace; font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-dim); }
+  h1 { margin: 6px 0 0; font-size: 32px; font-weight: 700; letter-spacing: -0.01em; text-wrap: balance; }
+  .lede { margin: 12px 0 0; font-size: 16px; line-height: 1.6; color: var(--text-dim); max-width: 60ch; }
+  .lede code, p code, td code, li code {
+    font-family: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace;
+    font-size: 0.92em; background: var(--surface); border: 1px solid var(--surface-border);
+    border-radius: 4px; padding: 1px 6px; color: var(--text);
+  }
+
+  .part { display: flex; flex-direction: column; gap: 16px; }
+  .part-label {
+    font-family: ui-monospace, monospace; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--text-dim); padding-bottom: 10px; border-bottom: 1px solid var(--surface-border);
+  }
+  .cards { display: flex; flex-direction: column; gap: 12px; }
+
+  a.card {
+    display: grid; grid-template-columns: 34px 1fr; gap: 16px; align-items: start;
+    text-decoration: none; color: inherit;
+    background: var(--surface); border: 1px solid var(--surface-border); border-radius: 12px;
+    padding: 18px 20px; transition: border-color 140ms ease, transform 140ms ease;
+  }
+  a.card:hover { border-color: var(--accent); transform: translateY(-1px); }
+  a.card:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  .card-num {
+    font-family: ui-monospace, monospace; font-size: 18px; font-weight: 700; color: var(--accent);
+    line-height: 1.4;
+  }
+  .card-body { display: flex; flex-direction: column; gap: 5px; }
+  .card-title { font-size: 16.5px; font-weight: 700; letter-spacing: -0.005em; }
+  .card-desc { font-size: 14px; line-height: 1.55; color: var(--text-dim); }
+  .card-tag {
+    align-self: flex-start; margin-top: 2px;
+    font-family: ui-monospace, monospace; font-size: 10.5px; letter-spacing: 0.06em; text-transform: uppercase;
+    color: var(--text-dim); border: 1px solid var(--surface-border); border-radius: 5px; padding: 2px 7px;
+  }
+
+  .keynote {
+    font-size: 15px; line-height: 1.65; background: var(--surface);
+    border-left: 3px solid var(--team-a); border-radius: 6px; padding: 12px 16px;
+  }
+  .keynote strong { color: var(--text); }
+
+  table.worked {
+    width: 100%; border-collapse: collapse; font-size: 14px;
+    background: var(--surface); border: 1px solid var(--surface-border);
+    border-radius: 10px; overflow: hidden;
+  }
+  table.worked th, table.worked td {
+    text-align: left; padding: 9px 14px; border-bottom: 1px solid var(--surface-border);
+  }
+  table.worked th { color: var(--text-dim); font-weight: 600; font-size: 11.5px; letter-spacing: 0.04em; text-transform: uppercase; font-family: ui-monospace, monospace; }
+  table.worked td.hi { color: var(--accent); font-weight: 600; font-family: ui-monospace, monospace; }
+  table.worked tr:last-child td { border-bottom: none; }
+
+  .filetree {
+    font-family: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace;
+    font-size: 12.5px; line-height: 1.7; white-space: pre; overflow-x: auto;
+    background: var(--surface); border: 1px solid var(--surface-border);
+    border-radius: 10px; padding: 16px 20px; color: var(--text);
+  }
+  .filetree .dim { color: var(--text-dim); }
+
+  .footer {
+    border-top: 1px solid var(--surface-border); padding-top: 22px;
+    font-size: 13.5px; line-height: 1.6; color: var(--text-dim);
+  }
+</style>
+</head>
+<body>
+<div class="page">
+  <div>
+    <div class="eyebrow">DiffusionCB &middot; reference index &middot; as of 2026-08-15</div>
+    <h1>How to navigate this codebase</h1>
+    <p class="lede">
+      This is the current, evolved picture of DiffusionCB — not the original design.
+      <code>nonmarkovian_cb_diffusion_spec.md</code> (one level up) is the initial spec;
+      its own progress tracker was last updated 2026-07-11 and doesn't cover the
+      classifier, the continuous-&delta; dataset, the Gaussian net, or the diffusion
+      model — all of which exist in code now. Treat the four pages below as current
+      status.
+    </p>
+  </div>
+
+  <div class="keynote">
+    <strong>TL;DR results:</strong> classifier separates the 3 noise classes at
+    88.7% &plusmn; 2.2% (chance 33%) reading only raw-data variance slopes, no
+    &lambda;. Diffusion recovers &delta; at RMSE 0.0024 vs the Gaussian-net
+    control's 0.0050, with better-calibrated uncertainty (97.2% vs 90.8% within
+    &plusmn;2&sigma;, ideal 95%).
+  </div>
+
+  <div class="part">
+    <div class="part-label">Part 1 &middot; Read the code</div>
+    <div class="cards">
+      <a class="card" href="codebase_map.html">
+        <span class="card-num">1</span>
+        <span class="card-body">
+          <span class="card-title">Codebase Map</span>
+          <span class="card-desc">Every file in DiffusionCB/, what it's for, and what to actually read first if you open it cold.</span>
+          <span class="card-tag">reference</span>
+        </span>
+      </a>
+      <a class="card" href="data_pipeline.html">
+        <span class="card-num">2</span>
+        <span class="card-body">
+          <span class="card-title">Data Pipeline</span>
+          <span class="card-desc">The two separate datasets, how each is generated, and exactly what processing turns raw shots into model input.</span>
+          <span class="card-tag">reference</span>
+        </span>
+      </a>
+      <a class="card" href="key_results.html">
+        <span class="card-num">3</span>
+        <span class="card-body">
+          <span class="card-title">Key Results</span>
+          <span class="card-desc">The graphs and numbers that carry the argument, with the notebook + cell each one lives in.</span>
+          <span class="card-tag">results</span>
+        </span>
+      </a>
+      <a class="card" href="decisions_and_assumptions.html">
+        <span class="card-num">4</span>
+        <span class="card-body">
+          <span class="card-title">Decisions and Assumptions</span>
+          <span class="card-desc">Why the code looks the way it does, what's still an untested assumption, and exactly where the spec and the built system have diverged.</span>
+          <span class="card-tag">reference</span>
+        </span>
+      </a>
+    </div>
+  </div>
+
+  <div class="part">
+    <div class="part-label">Part 2 &middot; Present it</div>
+    <div class="cards">
+      <a class="card" href="diffusioncb_presentation.html">
+        <span class="card-num">5</span>
+        <span class="card-body">
+          <span class="card-title">DiffusionCB — the slide deck</span>
+          <span class="card-desc">The narrative version, built for the advisor meeting: the real ibm_fez anomaly, why standard CB can't resolve it, the results, and next steps.</span>
+          <span class="card-tag">presentation</span>
+        </span>
+      </a>
+    </div>
+  </div>
+
+  <div class="part">
+    <div class="part-label">Quick file tree</div>
+    <div class="filetree"><span class="dim">DiffusionCB/</span>
+├── nonmarkovian_cb_diffusion_spec.md   <span class="dim">← ORIGINAL spec (historical, stale tracker)</span>
+├── plan_for_paper.md                    <span class="dim">← plain-language "what's publishable" picture</span>
+├── diffusion_plan.md                    <span class="dim">← build plan for conditional_diffusion.py (stale)</span>
+├── context_for_claude_code.md           <span class="dim">← gitignored; notation primer</span>
+│
+├── cb_harness.py                        <span class="dim">← the engine: circuits, noise classes, sweep()</span>
+├── sbi_data.py                          <span class="dim">← parquet → 36 features → tensors</span>
+├── gaussian_net.py                      <span class="dim">← control model</span>
+├── conditional_diffusion.py             <span class="dim">← the diffusion estimator</span>
+├── sbi_eval.py                          <span class="dim">← shared report() harness</span>
+├── run_diffusiondatagen.py              <span class="dim">← CLI driver: generates data_diffusion/</span>
+│
+├── generate_cb_data.ipynb               <span class="dim">← Phase-0 gate + all 3 classes + builds data/</span>
+├── analyze_noise_separability.ipynb     <span class="dim">← Step 5: the discriminability study</span>
+├── baseline_classifier.ipynb            <span class="dim">← the 88.7% classifier</span>
+├── sbi_experiments.ipynb                <span class="dim">← Gaussian net vs diffusion, the δ result</span>
+│
+├── data/                 <span class="dim">(gitignored)   ← 450 files, 3 classes, discrete dials</span>
+├── data_diffusion/       <span class="dim">(gitignored)   ← 10,000 files, memory only, continuous δ</span>
+│
+└── learn/
+    ├── index.html                       <span class="dim">← you are here</span>
+    ├── codebase_map.html
+    ├── data_pipeline.html
+    ├── key_results.html
+    ├── decisions_and_assumptions.html
+    └── diffusioncb_presentation.html    <span class="dim">← the advisor-meeting slide deck</span></div>
+  </div>
+
+  <div class="footer">
+    Continue extending this set as the project moves — a
+    <code>hardware_readiness.html</code> page once SPAM handling and the
+    Brillant cross-check get designed would be the natural next addition, before
+    any real ibm_fez run.
+  </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,760 @@
+<title>DiffusionCB</title>
+<style>
+  /* ============ Tokens — dark-first ============ */
+  :root {
+    --bg: #10141b;
+    --surface: #171d26;
+    --surface-2: #1e2530;
+    --border: #2a3340;
+    --text: #ece8df;
+    --text-dim: #8d97a3;
+    --accent: #5fc9d6;
+    --accent-warm: #e8a33d;
+    --accent-contrast: #0c1116;
+    --shadow: 0 20px 50px -20px rgba(0,0,0,0.6);
+  }
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) {
+      --bg: #f4f2ec;
+      --surface: #ffffff;
+      --surface-2: #ece8de;
+      --border: #dad4c6;
+      --text: #1c2127;
+      --text-dim: #5c6570;
+      --accent: #1c8fa0;
+      --accent-warm: #b5711e;
+      --accent-contrast: #ffffff;
+      --shadow: 0 20px 50px -20px rgba(28,33,39,0.18);
+    }
+  }
+  :root[data-theme="light"] {
+    --bg: #f4f2ec;
+    --surface: #ffffff;
+    --surface-2: #ece8de;
+    --border: #dad4c6;
+    --text: #1c2127;
+    --text-dim: #5c6570;
+    --accent: #1c8fa0;
+    --accent-warm: #b5711e;
+    --accent-contrast: #ffffff;
+    --shadow: 0 20px 50px -20px rgba(28,33,39,0.18);
+  }
+
+  /* ============ Base ============ */
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0; height: 100%;
+    background: var(--bg); color: var(--text);
+    overscroll-behavior: none;
+  }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .font-display { font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, "Times New Roman", serif; }
+  .font-mono { font-family: "SF Mono", "Cascadia Code", Consolas, "Liberation Mono", Menlo, monospace; }
+
+  h1, h2, h3, p { margin: 0; }
+  h1, h2 { text-wrap: balance; }
+
+  ::selection { background: var(--accent); color: var(--accent-contrast); }
+  a { color: var(--accent); }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+  /* ============ Deck shell ============ */
+  #deck-viewport {
+    position: fixed; inset: 0; overflow: hidden;
+    background: var(--bg);
+  }
+  #deck {
+    display: flex; height: 100%;
+    transition: transform 520ms cubic-bezier(.65,.05,.2,1);
+    will-change: transform;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    #deck { transition: none; }
+  }
+  .slide {
+    height: 100%;
+    flex-shrink: 0;
+    display: flex; flex-direction: column;
+    padding: clamp(2rem, 5vw, 4.5rem) clamp(1.5rem, 7vw, 7rem);
+    overflow-y: auto;
+  }
+
+  .eyebrow {
+    font-family: "SF Mono", "Cascadia Code", Consolas, monospace;
+    font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--accent); font-weight: 600;
+    margin-bottom: clamp(0.85rem, 2.6vh, 1.6rem);
+  }
+  .slide--appendix .eyebrow { color: var(--text-dim); }
+
+  .slide-title {
+    font-size: clamp(1.7rem, 3.8vw, 2.7rem);
+    line-height: 1.14;
+    font-weight: 500;
+    margin-bottom: clamp(0.85rem, 2.6vh, 1.5rem);
+    max-width: 20ch;
+  }
+  .lead {
+    font-size: clamp(1.0rem, 1.5vw, 1.2rem);
+    line-height: 1.55;
+    color: var(--text-dim);
+    max-width: 64ch;
+    margin-bottom: clamp(1rem, 2.6vh, 1.6rem);
+  }
+  .body-copy {
+    font-size: 0.98rem; line-height: 1.62; max-width: 62ch;
+    color: var(--text);
+  }
+  .body-copy + .body-copy { margin-top: 0.85rem; }
+
+  .slide-main {
+    flex: 1; display: flex; flex-direction: column; justify-content: center;
+    min-height: 0;
+    gap: 0;
+  }
+
+  .thesis-line {
+    font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    font-style: italic;
+    font-size: clamp(1.02rem, 1.7vw, 1.25rem);
+    color: var(--accent-warm);
+    margin-top: clamp(1rem, 2.6vh, 1.6rem);
+    max-width: 48ch;
+    border-left: 2px solid var(--accent-warm);
+    padding-left: 1rem;
+  }
+
+  /* ============ Title slide ============ */
+  .slide--title { justify-content: center; }
+  .slide--title .eyebrow { font-size: 0.85rem; }
+  .slide--title h1 {
+    font-size: clamp(1.9rem, 4.6vw, 3.5rem);
+    line-height: 1.12; font-weight: 500;
+    max-width: 20ch;
+    margin-bottom: 1.4rem;
+  }
+  .slide--title .lead { font-size: clamp(1.0rem, 1.6vw, 1.22rem); max-width: 54ch; }
+  .slide--title .meta {
+    margin-top: clamp(1.5rem, 4vh, 2.5rem);
+    font-family: "SF Mono", Consolas, monospace;
+    font-size: 0.78rem; color: var(--text-dim);
+    letter-spacing: 0.02em;
+  }
+
+  /* ============ Formula cards ============ */
+  .formula-card {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 1rem 1.3rem;
+    font-family: "SF Mono", "Cascadia Code", Consolas, monospace;
+    font-size: clamp(0.78rem, 1.15vw, 0.94rem);
+    color: var(--text);
+    overflow-x: auto;
+    white-space: pre;
+    margin: 0.6rem 0;
+    line-height: 1.55;
+  }
+  .formula-card .dim { color: var(--text-dim); }
+  .formula-card .hl { color: var(--accent); }
+  .formula-card .warm { color: var(--accent-warm); }
+
+  /* ============ Results table ============ */
+  .table-wrap { overflow-x: auto; }
+  table.results {
+    border-collapse: collapse;
+    width: 100%; max-width: 640px;
+    font-variant-numeric: tabular-nums;
+  }
+  table.results th, table.results td {
+    text-align: left; padding: 0.6rem 1rem;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.94rem;
+  }
+  table.results thead th {
+    font-family: "SF Mono", "Cascadia Code", Consolas, monospace;
+    font-size: 0.7rem; letter-spacing: 0.06em; text-transform: uppercase;
+    color: var(--text-dim); font-weight: 600;
+    border-bottom: 1px solid var(--border);
+  }
+  table.results td.num { font-family: "SF Mono", Consolas, monospace; }
+  table.results td.win { color: var(--accent); font-weight: 600; }
+  table.results tr:last-child td { border-bottom: none; }
+
+  /* ============ Two-column (scope slide) ============ */
+  .scope-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: clamp(1.5rem, 4vw, 3rem);
+    max-width: 900px;
+  }
+  @media (max-width: 720px) { .scope-grid { grid-template-columns: 1fr; } }
+  .scope-col h3 {
+    font-family: "SF Mono", Consolas, monospace;
+    font-size: 0.76rem; letter-spacing: 0.08em; text-transform: uppercase;
+    margin-bottom: 0.8rem;
+  }
+  .scope-col.shown h3 { color: var(--accent); }
+  .scope-col.not-shown h3 { color: var(--text-dim); }
+  .scope-col ul { margin: 0; padding-left: 1.1rem; }
+  .scope-col li { margin-bottom: 0.55rem; line-height: 1.5; }
+
+  /* ============ Point stack ============ */
+  .point-stack { display: flex; flex-direction: column; gap: 1.1rem; max-width: 62ch; }
+  .point {
+    display: grid; grid-template-columns: auto 1fr; gap: 0.85rem;
+    align-items: start;
+  }
+  .point .mark {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--accent-warm); margin-top: 0.5em; flex-shrink: 0;
+  }
+  .point p { line-height: 1.52; font-size: 0.96rem; }
+  .point b { color: var(--accent-warm); font-weight: 600; }
+
+  /* ============ Appendix list ============ */
+  .ref-list { display: flex; flex-direction: column; gap: 0.9rem; max-width: 64ch; }
+  .ref-list .ref-label {
+    font-family: "SF Mono", Consolas, monospace; font-size: 0.7rem;
+    letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-dim);
+    display: block; margin-bottom: 0.15rem;
+  }
+  .ref-list .ref-item { line-height: 1.5; font-size: 0.94rem; }
+
+  .tech-list { max-width: 60ch; margin: 0; padding-left: 1.1rem; }
+  .tech-list li { line-height: 1.58; margin-bottom: 0.5rem; font-size: 0.94rem; }
+
+  /* ============ Diagrams ============ */
+  .diagram-wrap { margin: clamp(1rem, 2.6vh, 1.6rem) 0; max-width: 720px; }
+  .diagram-wrap svg { width: 100%; height: auto; display: block; color: var(--text-dim); }
+  .diagram-wrap figcaption {
+    font-size: 0.82rem; color: var(--text-dim); margin-top: 0.55rem;
+  }
+  .diag-label { font-size: 12px; fill: currentColor; }
+  .diag-label-strong { font-size: 12px; fill: var(--text); font-weight: 600; }
+
+  /* ============ Stat strip (puzzle / classifier) ============ */
+  .stat-strip {
+    display: flex; gap: clamp(1.75rem, 5vw, 3.5rem); flex-wrap: wrap;
+    margin: 0.5rem 0 1.25rem;
+  }
+  .stat .num {
+    font-family: "SF Mono", Consolas, monospace;
+    font-size: clamp(1.7rem, 3.6vw, 2.5rem);
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+    color: var(--text);
+  }
+  .stat.flag .num { color: var(--accent-warm); }
+  .stat .label {
+    font-size: 0.76rem; color: var(--text-dim);
+    text-transform: uppercase; letter-spacing: 0.06em;
+    margin-top: 0.4rem;
+  }
+
+  /* ============ Testbed 3-column ============ */
+  .testbed-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: clamp(1rem, 3vw, 1.75rem);
+    max-width: 920px; margin: 0.75rem 0 1.25rem;
+  }
+  @media (max-width: 860px) { .testbed-grid { grid-template-columns: 1fr; } }
+  .testbed-col {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+    padding: 1rem 1.15rem;
+  }
+  .testbed-col .tname {
+    font-family: "SF Mono", Consolas, monospace; font-size: 0.72rem;
+    letter-spacing: 0.05em; text-transform: uppercase; color: var(--accent);
+    margin-bottom: 0.5rem; display: block;
+  }
+  .testbed-col.warm .tname { color: var(--accent-warm); }
+  .testbed-col p { font-size: 0.88rem; line-height: 1.5; color: var(--text-dim); }
+
+  .foot-note { font-size: 0.82rem; color: var(--text-dim); line-height: 1.5; max-width: 60ch; margin-top: 0.9rem; }
+
+  /* ============ Nav ============ */
+  #deck-nav {
+    position: fixed; left: 0; right: 0; bottom: clamp(1rem, 3vh, 1.75rem);
+    display: flex; align-items: center; justify-content: center; gap: 0.6rem;
+    z-index: 20; pointer-events: none;
+  }
+  #deck-nav .dots { display: flex; gap: 7px; pointer-events: auto; flex-wrap: wrap; justify-content: center; max-width: 80vw; }
+  #deck-nav .dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--border); border: none; cursor: pointer; padding: 0;
+    transition: background 200ms, transform 200ms;
+  }
+  #deck-nav .dot[aria-current="true"] { background: var(--accent); transform: scale(1.3); }
+  #deck-nav .dot:hover { background: var(--text-dim); }
+
+  .nav-arrow {
+    position: fixed; top: 50%; transform: translateY(-50%);
+    background: var(--surface); border: 1px solid var(--border);
+    color: var(--text); width: 42px; height: 42px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; z-index: 20; box-shadow: var(--shadow);
+    font-size: 1.1rem; line-height: 1;
+    opacity: 0.55; transition: opacity 160ms;
+  }
+  .nav-arrow:hover { opacity: 1; }
+  .nav-arrow:disabled { opacity: 0.12; cursor: default; }
+  #nav-prev { left: clamp(0.6rem, 2vw, 1.5rem); }
+  #nav-next { right: clamp(0.6rem, 2vw, 1.5rem); }
+
+  #slide-counter {
+    position: fixed; top: clamp(1rem, 3vh, 1.5rem); right: clamp(1.25rem, 3vw, 2rem);
+    font-family: "SF Mono", Consolas, monospace; font-size: 0.76rem;
+    color: var(--text-dim); z-index: 20;
+    font-variant-numeric: tabular-nums;
+  }
+
+  @media (max-width: 620px) {
+    .nav-arrow { width: 34px; height: 34px; font-size: 1rem; }
+    #deck-nav { bottom: 0.6rem; }
+    #slide-counter { top: 0.75rem; right: 1rem; }
+  }
+</style>
+
+<div id="deck-viewport">
+  <div id="deck">
+
+    <!-- 0 — Title -->
+    <section class="slide slide--title">
+      <div class="eyebrow font-mono">DiffusionCB</div>
+      <h1 class="font-display">Can non&#8209;Markovian noise be recovered from raw Cycle&#8209;Benchmarking data?</h1>
+      <p class="lead">Simulation&#8209;based inference with diffusion models — a physics question, with machine learning as the instrument, not the goal.</p>
+      <div class="meta">Lnv &middot; advisor meeting</div>
+    </section>
+
+    <!-- 1 — The puzzle -->
+    <section class="slide">
+      <div class="eyebrow font-mono">01 &mdash; The Puzzle</div>
+      <div class="slide-main">
+        <h2 class="slide-title font-display">A real anomaly we can't yet explain</h2>
+        <p class="body-copy">Cycle Benchmarking on <b>ibm_fez</b> measured a two&#8209;qubit decay far below what independent single&#8209;qubit noise would predict.</p>
+        <div class="stat-strip">
+          <div class="stat">
+            <div class="num">&#955;<sub>X</sub> = 0.90</div>
+            <div class="label">independence baseline</div>
+          </div>
+          <div class="stat flag">
+            <div class="num">&#955;<sub>XX</sub> = 0.42</div>
+            <div class="label">measured &mdash; dominant crosstalk</div>
+          </div>
+        </div>
+        <p class="body-copy">Standard CB collapses everything to that one decay constant &#955;<sub>P</sub>, and by itself it cannot tell us <i>why</i> the gap exists:</p>
+        <div class="point-stack" style="margin-top: 0.6rem;">
+          <div class="point"><div class="mark"></div><p>a <b>coherent</b> over&#8209;rotation,</p></div>
+          <div class="point"><div class="mark"></div><p>a <b>stochastic but memoryless</b> (Markovian) correlated error, or</p></div>
+          <div class="point"><div class="mark"></div><p>genuinely <b>non&#8209;Markovian</b> noise &mdash; the environment carrying memory between cycles</p></div>
+        </div>
+        <p class="thesis-line">&#955;<sub>P</sub> alone cannot distinguish these three. This talk is about what can.</p>
+      </div>
+    </section>
+
+    <!-- 2 — Why standard CB can't resolve it -->
+    <section class="slide">
+      <div class="eyebrow font-mono">02 &mdash; Why Standard CB Fails Here</div>
+      <div class="slide-main">
+        <h2 class="slide-title font-display">The theory assumes away exactly what we need</h2>
+        <p class="body-copy">Standard RB/CB theory assumes Markovian noise: average sequence fidelity decays as one clean exponential, and the decay rate maps directly to gate infidelity.</p>
+
+        <div class="formula-card">Markovian assumption (standard RB / CB):
+  F_seq(m) = A &#183; p^m + B          <span class="dim">single exponential</span>
+  lambda_P = (F[m2] / F[m1])^(1 / (m2&#8722;m1))
+
+Markovian, precisely <span class="dim">(GKSL generator &mdash; what "no memory" means)</span>:
+  dS/dt = &#8722;i[H,S] + sum_k gamma_k &#183; ( L_k S L_k&#8224; &#8722; &#189;{L_k&#8224;L_k, S} )
+  <span class="dim">one fixed generator, no history dependence</span>
+
+Non&#8209;Markovian reality:
+  decay is <span class="warm">generically NON&#8209;exponential</span></div>
+
+        <p class="body-copy">Even where decay stays exponential, Brillant et al. (PRL 135, 070601) show the rate stops equaling gate infidelity under non&#8209;Markovian, finite&#8209;time&#8209;gate noise. And the rigorous object here &mdash; the process tensor (Figueroa&#8209;Romero et al., PRX Quantum 2, 040351) &mdash; gives a sharp, checkable criterion: its 2&#8209;step Choi state &#933;<sub>2:1</sub> factorizes as &#933;<sub>1:1</sub>&#8855;&#933;<sub>1:1</sub> exactly when the noise is Markovian.</p>
+        <p class="thesis-line">Non&#8209;factorizability of the process tensor's Choi state IS the non&#8209;Markovian signature &mdash; not just "the decay looks bent."</p>
+      </div>
+    </section>
+
+    <!-- 3 — Reframing as inference -->
+    <section class="slide">
+      <div class="eyebrow font-mono">03 &mdash; The Reframing</div>
+      <div class="slide-main">
+        <h2 class="slide-title font-display">Turn it into an inference problem</h2>
+        <p class="lead">Given a candidate noise structure, simulating what an experiment would look like is easy. Recovering that structure from real data is the actual, hard question.</p>
+
+        <figure class="diagram-wrap">
+          <svg viewBox="0 0 640 210" role="img" aria-label="Forward simulation from noise structure to raw data is easy; the reverse, learning to recover noise structure from data, is the real question this project answers.">
+            <defs>
+              <marker id="arrowFwd" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                <polygon points="0,0 10,5 0,10" fill="currentColor"></polygon>
+              </marker>
+              <marker id="arrowLearn" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                <polygon points="0,0 10,5 0,10" fill="var(--accent-warm)"></polygon>
+              </marker>
+            </defs>
+            <rect x="20" y="55" width="170" height="56" rx="5" fill="none" stroke="currentColor" stroke-width="1.3"></rect>
+            <text x="105" y="88" text-anchor="middle" class="diag-label-strong">noise structure</text>
+            <rect x="460" y="55" width="150" height="56" rx="5" fill="none" stroke="currentColor" stroke-width="1.3"></rect>
+            <text x="535" y="88" text-anchor="middle" class="diag-label-strong">Raw CB data</text>
+            <line x1="194" y1="70" x2="456" y2="70" stroke="currentColor" stroke-width="1.3" marker-end="url(#arrowFwd)"></line>
+            <text x="320" y="55" text-anchor="middle" class="diag-label">simulate &mdash; forward, easy</text>
+            <line x1="456" y1="112" x2="194" y2="112" stroke="var(--accent-warm)" stroke-width="1.6" stroke-dasharray="5 4" marker-end="url(#arrowLearn)"></line>
+            <text x="320" y="140" text-anchor="middle" class="diag-label" fill="var(--accent-warm)">recover &mdash; learned, the real question</text>
+          </svg>
+          <figcaption>Simulation&#8209;based inference (SBI): simulate the easy direction many times, then train a model to invert it.</figcaption>
+        </figure>
+
+        <p class="thesis-line">Given raw (un&#8209;averaged) CB data, infer the temporal&#8209;correlation structure of the noise that produced it.</p>
+      </div>
+    </section>
+
+    <!-- 4 — Testbed -->
+    <section class="slide">
+      <div class="eyebrow font-mono">04 &mdash; Building a Controlled Testbed</div>
+      <div class="slide-main">
+        <h2 class="slide-title font-display">Three noise classes, tuned to look identical to &#955;<sub>P</sub></h2>
+        <p class="body-copy">A system qubit S is coupled to an environment qubit E each cycle. Tracing out and resetting E every step erases memory (Markovian); retaining E lets S&#8209;E entanglement accumulate across cycles &mdash; that accumulation IS the memory.</p>
+
+        <div class="formula-card">shared per&#8209;cycle Hamiltonian (S+E collision model):
+  H = J&#183;X<sub>S</sub>X<sub>E</sub> + hx&#183;(X<sub>S</sub>+X<sub>E</sub>) + hy&#183;(Y<sub>S</sub>+Y<sub>E</sub>)
+  U_SE = exp(&#8722;i&#183;delta&#183;H)</div>
+
+        <div class="testbed-grid">
+          <div class="testbed-col warm">
+            <span class="tname">non&#8209;Markovian ("memory")</span>
+            <p>E carried forward across every cycle, traced out only at the end. This IS the memory.</p>
+          </div>
+          <div class="testbed-col">
+            <span class="tname">stochastic&#8209;Markovian ("jitter")</span>
+            <p>Same channel, but E is reset every cycle &rarr; i.i.d. noise, memoryless by construction.</p>
+          </div>
+          <div class="testbed-col">
+            <span class="tname">coherent ("drift")</span>
+            <p>A fixed over&#8209;rotation on S alone. No environment qubit at all.</p>
+          </div>
+        </div>
+        <p class="thesis-line">All three calibrated to the same &#955;<sub>P</sub> &mdash; so standard CB genuinely cannot tell them apart by construction.</p>
+      </div>
+    </section>
+
+    <!-- 5 — Result: raw data separates -->
+    <section class="slide">
+      <div class="eyebrow font-mono">05 &mdash; Result: Raw Data Separates What &#955; Cannot</div>
+      <div class="slide-main">
+        <h2 class="slide-title font-display">The spread across sequences carries the fingerprint</h2>
+        <p class="body-copy">At matched decay rate, the <i>variance</i> across random twirl sequences behaves completely differently for the two classes &#955;<sub>P</sub> calls identical.</p>
+
+        <figure class="diagram-wrap">
+          <svg viewBox="0 0 620 220" role="img" aria-label="Variance across random sequences versus sequence length m: the non-Markovian memory class grows with m, while the stochastic-Markovian jitter class stays flat, at matched decay rate lambda_P.">
+            <line x1="60" y1="180" x2="580" y2="180" stroke="currentColor" stroke-width="1"></line>
+            <line x1="60" y1="30" x2="60" y2="180" stroke="currentColor" stroke-width="1"></line>
+            <text x="580" y="200" text-anchor="end" class="diag-label">sequence length m</text>
+            <text x="40" y="30" text-anchor="end" class="diag-label" transform="rotate(0)">Var_l(f)</text>
+            <path d="M 70 170 C 200 168, 350 160, 570 150" fill="none" stroke="currentColor" stroke-width="2"></path>
+            <text x="580" y="145" text-anchor="end" class="diag-label">jitter &mdash; flat (memoryless)</text>
+            <path d="M 70 175 C 220 150, 380 95, 570 45" fill="none" stroke="var(--accent-warm)" stroke-width="2.2"></path>
+            <text x="480" y="60" text-anchor="middle" class="diag-label" fill="var(--accent-warm)">memory &mdash; grows with m</text>
+          </svg>
+          <figcaption>Illustrative: memory's variance compounds cycle&#8209;over&#8209;cycle; jitter's averages out. Shot&#8209;noise floor is small (&#8804;~1% at large m) and doesn't change the story.</figcaption>
+        </figure>
+
+        <p class="body-copy">A second fingerprint separates <b>drift</b> from <b>memory</b>: a coherent X&#8209;rotation leaves the X&#8209;channel exactly flat (it commutes with its own axis), while non&#8209;Markovian coupling disturbs it. The one Pauli channel a coherent error can't touch is the one memory always does.</p>
+      </div>
+    </section>
+
+    <!-- 6 — Result: classifier -->
+    <section class="slide">
+      <div class="eyebrow font-mono">06 &mdash; Result: A Classifier Reads the Discarded Spread</div>
+      <div class="slide-main">
+        <h2 class="slide-title font-display">Turning the fingerprint into a working detector</h2>
+        <p class="body-copy">Per run: 540 raw outcomes &rarr; 18 per&#8209;(Pauli,m) variances &rarr; 3 variance&#8209;vs&#8209;m slopes (one per Pauli). Logistic regression on those 3 numbers &mdash; no &#955;<sub>P</sub> in the feature set at all.</p>
+
+        <div class="stat-strip">
+          <div class="stat">
+            <div class="num">88.7% &#177; 2.2%</div>
+            <div class="label">5&#8209;fold CV accuracy</div>
+          </div>
+          <div class="stat">
+            <div class="num">33%</div>
+            <div class="label">chance (3 classes)</div>
+          </div>
+        </div>
+        <p class="thesis-line">Reading only the spread standard CB throws away is enough to classify the noise class &mdash; the signal genuinely lives in the raw data.</p>
+      </div>
+    </section>
+
+    <!-- 7 — Why diffusion -->
+    <section class="slide">
+      <div class="eyebrow font-mono">07 &mdash; Why Diffusion, Not Just a Classifier</div>
+      <div class="slide-main">
+        <h2 class="slide-title font-display">A label isn't a posterior</h2>
+        <p class="body-copy">A classifier gives one label. We want a continuous, honestly&#8209;uncertain estimate of <i>how strong</i> the noise is &mdash; and eventually, jointly, several correlated parameters at once. A plain regression model can only report one symmetric bump.</p>
+
+        <figure class="diagram-wrap">
+          <svg viewBox="0 0 640 220" role="img" aria-label="A Gaussian model can only draw a single symmetric bump. Real data can require two genuinely separate plausible answers, which a Gaussian cannot represent.">
+            <line x1="320" y1="20" x2="320" y2="190" stroke="var(--border)" stroke-width="1"></line>
+            <text x="160" y="30" text-anchor="middle" class="diag-label-strong">What a Gaussian can draw</text>
+            <line x1="50" y1="150" x2="270" y2="150" stroke="currentColor" stroke-width="1"></line>
+            <path d="M 55 150 C 95 150, 105 55, 160 55 C 215 55, 225 150, 265 150" fill="none" stroke="currentColor" stroke-width="2"></path>
+            <text x="160" y="178" text-anchor="middle" class="diag-label">one bump, always symmetric</text>
+            <text x="480" y="30" text-anchor="middle" class="diag-label-strong" fill="var(--accent-warm)">What data can look like</text>
+            <line x1="370" y1="150" x2="590" y2="150" stroke="currentColor" stroke-width="1"></line>
+            <path d="M 375 150 C 400 150, 405 90, 430 90 C 455 90, 460 150, 480 150" fill="none" stroke="var(--accent-warm)" stroke-width="2"></path>
+            <path d="M 480 150 C 500 150, 505 65, 530 65 C 555 65, 560 150, 585 150" fill="none" stroke="var(--accent-warm)" stroke-width="2"></path>
+            <text x="480" y="178" text-anchor="middle" class="diag-label" fill="var(--accent-warm)">two genuinely different answers</text>
+          </svg>
+          <figcaption>Diffusion samples instead of assuming a shape &mdash; it can draw either panel, or a curved, correlated version in higher dimensions.</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <!-- 8 — Pipeline -->
+    <section class="slide">
+      <div class="eyebrow font-mono">08 &mdash; The Pipeline (Proof of Concept)</div>
+      <div class="slide-main">
+        <h2 class="slide-title font-display">From raw circuits to a posterior</h2>
+        <p class="body-copy">Scoped to the <b>non&#8209;Markovian ("memory") class only</b>, one parameter &#948; swept over [0.02, 0.25], 10,000 simulated Cycle&#8209;Benchmarking runs.</p>
+        <div class="formula-card">per run: mean_(P,m) = mean_l( f_(P,m,l) )    <span class="dim">what CB keeps</span>
+         var_(P,m)  = Var_l( f_(P,m,l) )     <span class="dim">what CB discards</span>
+         3 Paulis &#215; 6 lengths &#215; 2 &#8594; <span class="hl">36 features</span></div>
+
+        <figure class="diagram-wrap">
+          <svg viewBox="0 0 900 190" role="img" aria-label="Pipeline: raw CB data is compressed into 36 features, which condition a diffusion model, which is sampled one thousand times to produce a posterior distribution over delta.">
+            <defs>
+              <marker id="arrowFlow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
+                <polygon points="0,0 10,5 0,10" fill="currentColor"></polygon>
+              </marker>
+            </defs>
+            <rect x="10" y="65" width="150" height="60" rx="5" fill="none" stroke="currentColor" stroke-width="1.3"></rect>
+            <text x="85" y="90" text-anchor="middle" class="diag-label-strong">Raw CB data</text>
+            <text x="85" y="108" text-anchor="middle" class="diag-label">3P &#215; 6m &#215; 30 twirls = 540</text>
+            <line x1="164" y1="95" x2="214" y2="95" stroke="currentColor" stroke-width="1.3" marker-end="url(#arrowFlow)"></line>
+            <text x="189" y="80" text-anchor="middle" class="diag-label">compress</text>
+            <rect x="218" y="65" width="140" height="60" rx="5" fill="none" stroke="currentColor" stroke-width="1.3"></rect>
+            <text x="288" y="90" text-anchor="middle" class="diag-label-strong">36 features</text>
+            <text x="288" y="108" text-anchor="middle" class="diag-label">mean + var</text>
+            <line x1="362" y1="95" x2="412" y2="95" stroke="currentColor" stroke-width="1.3" marker-end="url(#arrowFlow)"></line>
+            <text x="387" y="80" text-anchor="middle" class="diag-label">condition</text>
+            <rect x="416" y="55" width="190" height="80" rx="5" fill="none" stroke="var(--accent)" stroke-width="1.8"></rect>
+            <text x="511" y="90" text-anchor="middle" class="diag-label-strong" fill="var(--accent)">Conditional diffusion</text>
+            <text x="511" y="108" text-anchor="middle" class="diag-label" fill="var(--accent)">~23.5K parameters</text>
+            <line x1="610" y1="95" x2="660" y2="95" stroke="currentColor" stroke-width="1.3" marker-end="url(#arrowFlow)"></line>
+            <text x="635" y="80" text-anchor="middle" class="diag-label">sample &#215;1,000</text>
+            <rect x="664" y="65" width="220" height="60" rx="5" fill="none" stroke="currentColor" stroke-width="1.3"></rect>
+            <text x="774" y="90" text-anchor="middle" class="diag-label-strong">Posterior over &#948;</text>
+            <text x="774" y="108" text-anchor="middle" class="diag-label">1,000 samples per run</text>
+          </svg>
+          <figcaption>Every stage of the pipeline, left to right &mdash; nothing hand&#8209;waved between raw circuits and a final distribution.</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <!-- 9 — Results -->
+    <section class="slide">
+      <div class="eyebrow font-mono">09 &mdash; Results</div>
+      <div class="slide-main">
+        <h2 class="slide-title font-display">Diffusion beat the Gaussian control on every metric</h2>
+        <div class="table-wrap">
+          <table class="results">
+            <thead>
+              <tr><th>Metric</th><th>Gaussian net</th><th>Diffusion</th><th>Ideal</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>RMSE</td><td class="num">0.0050</td><td class="num win">0.0024</td><td class="num">&mdash;</td></tr>
+              <tr><td>&#177;2&#963; coverage</td><td class="num">90.8%</td><td class="num win">97.2%</td><td class="num">95%</td></tr>
+              <tr><td>std of z</td><td class="num">1.22</td><td class="num win">0.90</td><td class="num">1.0</td></tr>
+              <tr><td>|z| &gt; 2</td><td class="num">9.2%</td><td class="num win">2.9%</td><td class="num">4.6%</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="thesis-line">The Gaussian net was overconfident &mdash; diffusion's flexible posterior closed that gap, and improved point accuracy at the same time.</p>
+      </div>
+    </section>
+
+    <!-- 10 — Scope -->
+    <section class="slide">
+      <div class="eyebrow font-mono">10 &mdash; Scope</div>
+      <div class="slide-main">
+        <h2 class="slide-title font-display">What this shows &mdash; and doesn't</h2>
+        <p class="body-copy" style="margin-bottom: 1.6rem;">10,000 simulated runs, non&#8209;Markovian ("memory") class only, &#948; &#8712; [0.02, 0.25], one seed=0 train/test split, one trained model per method.</p>
+        <div class="scope-grid">
+          <div class="scope-col shown">
+            <h3 class="font-mono">Shown</h3>
+            <ul class="body-copy">
+              <li>On this controlled, matched comparison, diffusion's posterior shape fixed a real, measured overconfidence problem the Gaussian baseline had.</li>
+              <li>Point accuracy improved alongside calibration &mdash; not a trade&#8209;off.</li>
+            </ul>
+          </div>
+          <div class="scope-col not-shown">
+            <h3 class="font-mono">Not yet shown</h3>
+            <ul class="body-copy">
+              <li>Joint inference across noise classes + parameters</li>
+              <li>Generalization to a wider &#948; range</li>
+              <li>Real hardware data</li>
+              <li>Robustness across seeds/splits</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 11 — Next steps -->
+    <section class="slide">
+      <div class="eyebrow font-mono">11 &mdash; Next Steps</div>
+      <div class="slide-main">
+        <h2 class="slide-title font-display">Where this earns its keep</h2>
+        <div class="point-stack">
+          <div class="point">
+            <div class="mark"></div>
+            <p><b>Define the real inference target.</b> Today's &#948;&#8209;only regression is a 1&#8209;D scaffold. The actual goal is joint inference &mdash; <i>which</i> mechanism, at <i>what</i> strength &mdash; where the posterior can be genuinely multi&#8209;modal. A Gaussian net structurally can't represent that; diffusion can.</p>
+          </div>
+          <div class="point">
+            <div class="mark"></div>
+            <p><b>Candidate mechanisms</b>, grounded in real transmon physics: two&#8209;level&#8209;system defects, classical 1/f drift, and qubit&#8209;qubit crosstalk &mdash; already observed on real Fez hardware.</p>
+          </div>
+          <div class="point">
+            <div class="mark"></div>
+            <p><b>SPAM error</b> isn't yet cancelled in the feature pipeline (today's simulated data has none) &mdash; needs explicit handling before real hardware features reach the model.</p>
+          </div>
+          <div class="point">
+            <div class="mark"></div>
+            <p><b>Real hardware, closing the loop:</b> re&#8209;run CB on ibm_fez retaining raw data, feed it to the trained model, and cross&#8209;check its inference against the Brillant gate&#8209;implementation diagnostic (ZSX vs U3 decay&#8209;rate disagreement) &mdash; an independent test of whether the model's answer is right. This is what finally lets us explain the &#955;<sub>XX</sub> = 0.42 anomaly we opened with.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 12 — Appendix: how it works -->
+    <section class="slide slide--appendix">
+      <div class="eyebrow font-mono">Appendix A &mdash; How It Works</div>
+      <div class="slide-main">
+        <h2 class="slide-title font-display" style="font-size: clamp(1.5rem, 3vw, 2.1rem); max-width: none;">The diffusion model, briefly</h2>
+
+        <div class="formula-card">forward <span class="dim">(fixed, no learning)</span>:
+  x_t = sqrt(alpha_bar_t)&#183;x_0 + sqrt(1&#8722;alpha_bar_t)&#183;eps
+
+learned <span class="dim">(noise predictor)</span>:
+  eps_hat = <span class="hl">NoisePredictor</span>(x_t, t, c)
+
+reverse mean <span class="dim">(computed directly from the prediction)</span>:
+  mu_theta(x_t,t) = (1/sqrt(alpha_t)) &#183; ( x_t &#8722; ((1&#8722;alpha_t)/sqrt(1&#8722;alpha_bar_t)) &#183; eps_hat )</div>
+
+        <ul class="tech-list body-copy">
+          <li>Cosine noise schedule, T = 100 steps (Nichol &amp; Dhariwal, 2021)</li>
+          <li>NoisePredictor: 3&#8209;layer MLP, ~23,500 parameters, sinusoidal time embedding</li>
+          <li>Training: predict the injected noise (MSE loss); weights chosen by <b style="color:var(--text);">validation</b> loss, to avoid overconfidence</li>
+          <li>Sampling: 100&#8209;step reverse walk from pure noise, conditioned on a run's 36 features; repeated 1,000&#215; per case</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- 13 — Appendix: references -->
+    <section class="slide slide--appendix">
+      <div class="eyebrow font-mono">Appendix B &mdash; References</div>
+      <div class="slide-main">
+        <h2 class="slide-title font-display" style="font-size: clamp(1.5rem, 3vw, 2.1rem); max-width: none;">References</h2>
+        <div class="ref-list">
+          <div class="ref-item">
+            <span class="ref-label font-mono">Process tensor / non&#8209;Markovian RB</span>
+            Figueroa&#8209;Romero et al., PRX Quantum 2, 040351
+          </div>
+          <div class="ref-item">
+            <span class="ref-label font-mono">Finite&#8209;time gates, implementation dependence</span>
+            Brillant et al., PRL 135, 070601 (2025)
+          </div>
+          <div class="ref-item">
+            <span class="ref-label font-mono">SBI / diffusion method template</span>
+            DiffQEC, arXiv:2604.24640
+          </div>
+          <div class="ref-item">
+            <span class="ref-label font-mono">Cosine noise schedule</span>
+            Nichol &amp; Dhariwal, &ldquo;Improved Denoising Diffusion Probabilistic Models,&rdquo; ICML 2021
+          </div>
+          <div class="ref-item">
+            <span class="ref-label font-mono">Diffusion framework</span>
+            Ho, Jain &amp; Abbeel, &ldquo;Denoising Diffusion Probabilistic Models,&rdquo; NeurIPS 2020
+          </div>
+          <div class="ref-item">
+            <span class="ref-label font-mono">Markovian baseline for comparison</span>
+            van den Berg et al., <i>Nature Physics</i> 19, 1116 (2023) &mdash; IBM NoiseLearner / Pauli&#8209;Lindblad
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+</div>
+
+<div id="slide-counter" class="font-mono">01 / 14</div>
+<button id="nav-prev" class="nav-arrow" aria-label="Previous slide">&#8249;</button>
+<button id="nav-next" class="nav-arrow" aria-label="Next slide">&#8250;</button>
+<nav id="deck-nav" aria-label="Slide navigation">
+  <div class="dots" id="dots"></div>
+</nav>
+
+<script>
+  (function () {
+    var slides = document.querySelectorAll('.slide');
+    var total = slides.length;
+    var deck = document.getElementById('deck');
+    var counter = document.getElementById('slide-counter');
+    var prevBtn = document.getElementById('nav-prev');
+    var nextBtn = document.getElementById('nav-next');
+    var dotsWrap = document.getElementById('dots');
+    var current = 0;
+
+    deck.style.width = (total * 100) + '%';
+    slides.forEach(function (s) { s.style.width = (100 / total) + '%'; });
+
+    for (var i = 0; i < total; i++) {
+      var dot = document.createElement('button');
+      dot.className = 'dot';
+      dot.setAttribute('aria-label', 'Go to slide ' + (i + 1));
+      dot.addEventListener('click', (function (idx) {
+        return function () { go(idx); };
+      })(i));
+      dotsWrap.appendChild(dot);
+    }
+    var dots = dotsWrap.querySelectorAll('.dot');
+
+    function pad(n) { return n < 10 ? '0' + n : '' + n; }
+
+    function render() {
+      deck.style.transform = 'translateX(-' + (current * (100 / total)) + '%)';
+      counter.textContent = pad(current + 1) + ' / ' + pad(total);
+      prevBtn.disabled = current === 0;
+      nextBtn.disabled = current === total - 1;
+      dots.forEach(function (d, idx) {
+        if (idx === current) { d.setAttribute('aria-current', 'true'); }
+        else { d.removeAttribute('aria-current'); }
+      });
+    }
+
+    function go(idx) {
+      current = Math.max(0, Math.min(total - 1, idx));
+      render();
+    }
+
+    prevBtn.addEventListener('click', function () { go(current - 1); });
+    nextBtn.addEventListener('click', function () { go(current + 1); });
+
+    window.addEventListener('keydown', function (e) {
+      if (e.key === 'ArrowRight' || e.key === 'PageDown') { go(current + 1); }
+      else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { go(current - 1); }
+      else if (e.key === 'Home') { go(0); }
+      else if (e.key === 'End') { go(total - 1); }
+    });
+
+    var touchStartX = null;
+    document.addEventListener('touchstart', function (e) { touchStartX = e.touches[0].clientX; }, { passive: true });
+    document.addEventListener('touchend', function (e) {
+      if (touchStartX === null) return;
+      var dx = e.changedTouches[0].clientX - touchStartX;
+      if (Math.abs(dx) > 50) { go(dx < 0 ? current + 1 : current - 1); }
+      touchStartX = null;
+    }, { passive: true });
+
+    render();
+  })();
+</script>

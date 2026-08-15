@@ -1,0 +1,301 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DiffusionCB — Decisions and Assumptions</title>
+<style>
+  :root {
+    --bg: #12151b; --surface: #1a1f28; --surface-border: #2a3140;
+    --text: #eef1f6; --text-dim: #8b96a8; --team-a: #f2a541; --team-b: #4fc3c9;
+    --accent: #f2a541;
+  }
+  :root[data-theme="light"] {
+    --bg: #eef1f5; --surface: #ffffff; --surface-border: #d8dee6;
+    --text: #1a1f28; --text-dim: #5b6472; --team-a: #d9820f; --team-b: #1f8f96;
+    --accent: #b8690a;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #12151b; --surface: #1a1f28; --surface-border: #2a3140;
+      --text: #eef1f6; --text-dim: #8b96a8; --team-a: #f2a541; --team-b: #4fc3c9; --accent: #f2a541;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: -apple-system, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    display: flex; justify-content: center; padding: 48px 20px 80px; margin: 0;
+  }
+  .page { width: 100%; max-width: 700px; display: flex; flex-direction: column; gap: 40px; }
+  .eyebrow { font-family: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace; font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-dim); }
+  .eyebrow a { color: inherit; }
+  h1 { margin: 6px 0 0; font-size: 32px; font-weight: 700; letter-spacing: -0.01em; text-wrap: balance; }
+  .lede { margin: 12px 0 0; font-size: 16.5px; line-height: 1.6; color: var(--text-dim); max-width: 62ch; }
+
+  code {
+    font-family: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace;
+    font-size: 0.92em; background: var(--surface); border: 1px solid var(--surface-border);
+    border-radius: 4px; padding: 1px 6px; color: var(--text);
+  }
+
+  section.act { display: flex; flex-direction: column; gap: 16px; padding-top: 10px; border-top: 1px solid var(--surface-border); }
+  .act .kicker {
+    font-family: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace;
+    font-size: 11.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-dim);
+  }
+  .act h2 { font-size: 22px; font-weight: 700; margin: 2px 0 0; letter-spacing: -0.005em; text-wrap: balance; }
+  .act > p { font-size: 15.5px; line-height: 1.68; margin: 0; max-width: 62ch; }
+
+  .filecard {
+    background: var(--surface); border: 1px solid var(--surface-border); border-radius: 10px;
+    padding: 16px 20px; display: flex; flex-direction: column; gap: 6px;
+  }
+  .filecard h3 { margin: 0; font-size: 15px; font-weight: 700; color: var(--text); }
+  .filecard p { font-size: 14.5px; line-height: 1.62; color: var(--text-dim); margin: 0; }
+  .filecard p strong { color: var(--text); }
+
+  .divergence {
+    background: var(--surface); border: 1px solid var(--team-b); border-left: 3px solid var(--team-b);
+    border-radius: 10px; padding: 16px 20px; display: flex; flex-direction: column; gap: 6px;
+  }
+  .divergence h3 { margin: 0; font-size: 15px; font-weight: 700; color: var(--team-b); }
+  .divergence p { font-size: 14.5px; line-height: 1.62; color: var(--text); margin: 0; }
+  .divergence p strong { color: var(--team-b); }
+
+  .keynote {
+    font-size: 15px; line-height: 1.65; background: var(--surface);
+    border-left: 3px solid var(--team-a); border-radius: 6px; padding: 12px 16px;
+  }
+
+  .nav-footer {
+    border-top: 1px solid var(--surface-border); padding-top: 22px;
+    font-size: 13.5px; display: flex; justify-content: space-between; color: var(--text-dim);
+  }
+  .nav-footer a { color: var(--accent); text-decoration: none; }
+  .nav-footer a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+<div class="page">
+  <div>
+    <div class="eyebrow"><a href="index.html">DiffusionCB / reference index</a> &middot; as of 2026-08-15</div>
+    <h1>Decisions and Assumptions</h1>
+    <p class="lede">
+      Two kinds of content here: decisions that were deliberately made (with
+      the reasoning), and assumptions baked into the current code that
+      haven't been tested or relaxed yet. Also — because this explainer
+      exists specifically because the system evolved past its original spec
+      — a section on exactly where the plan and the built system now
+      disagree.
+    </p>
+  </div>
+
+  <section class="act">
+    <div class="kicker">Deliberate decisions</div>
+
+    <div class="filecard">
+      <h3>SBI framing, diffusion as a consequence not a premise</h3>
+      <p>Forward (noise structure → data) is cheap to simulate, inverse
+      (data → noise structure) is the hard problem. Diffusion was explicitly
+      <strong>not</strong> assumed as "the method" from the start — the spec
+      frames it as one candidate estimator chosen only after the inference
+      target is fixed, to avoid a hammer-seeking-nail error.</p>
+    </div>
+
+    <div class="filecard">
+      <h3>Matched-marginal constraint across all three noise classes</h3>
+      <p>Memory, jitter, and drift are deliberately calibrated so their
+      &lambda;<sub>P</sub> values coincide. This is what makes the
+      discriminability result meaningful — if the classes differed in
+      &lambda;<sub>P</sub>, any classifier "winning" by reading the marginal
+      would be vacuous.</p>
+    </div>
+
+    <div class="filecard">
+      <h3>Quantum S+E collision model over a classical noise model</h3>
+      <p>Locked as the first noise backend (2026-07-06) because it matches
+      the process tensor formalism directly and stays tractable at 1–2
+      environment qubits. A classical Ornstein–Uhlenbeck model was
+      deliberately deferred as a later, faster/tunable alternative — not
+      built first.</p>
+    </div>
+
+    <div class="filecard">
+      <h3>Per-sequence, per-shot data retention</h3>
+      <p>The entire premise of the project is that averaging over random
+      sequences destroys the temporal-correlation signal. All three classes
+      retain full (P, m, l) granularity; averaging only happens downstream,
+      deliberately, at whichever level a given analysis needs.</p>
+    </div>
+
+    <div class="filecard">
+      <h3>CB over RB as the data modality</h3>
+      <p>Pauli-resolved decays give richer structure than RB's single global
+      number, and CB's repeated identical dressed cycles are a cleaner
+      setting for detecting cycle-to-cycle correlation than RB's
+      heterogeneous Clifford sequences. RB is out of scope as a data source.</p>
+    </div>
+
+    <div class="filecard">
+      <h3>λ<sub>P</sub> from two endpoints only, not a full curve fit</h3>
+      <p><code>lambda_P = (F[m2]/F[m1])^(1/(m2-m1))</code>, using only
+      <code>m_list[0]</code> and <code>m_list[-1]</code>. A simplification —
+      worth knowing if you ever compare this &lambda;<sub>P</sub> against a
+      more careful RB/CB fitting routine elsewhere.</p>
+    </div>
+
+    <div class="filecard">
+      <h3>Matched-decay calibration is computed from data, never hardcoded</h3>
+      <p>The 3-way comparison finds the decay band all three classes can
+      jointly reach, targets its midpoint, then picks each class's closest
+      dial. An earlier fixed <code>pval=0.10</code> and <code>target=0.91</code>
+      were deliberately removed in favor of this derived approach, so the
+      comparison stays valid if the dataset is regenerated with different
+      dial ranges.</p>
+    </div>
+
+    <div class="filecard">
+      <h3>Validation-loss weight selection for both models</h3>
+      <p>Both <code>train_gaussian</code> and <code>train_diffusion</code>
+      select final weights by best validation loss, not train loss. Selecting
+      on train loss would reward the Gaussian net shrinking &sigma; to fit
+      training noise — the same overconfidence failure the project is trying
+      to demonstrate diffusion fixes, so it would have undermined the
+      comparison to let it happen on the control model too.</p>
+    </div>
+
+    <div class="filecard">
+      <h3>δ standardization lives in the notebook, not the module</h3>
+      <p><code>conditional_diffusion.py</code>'s docstring assumes
+      <code>x_0</code> arrives already standardized — the standardization
+      itself is done in <code>sbi_experiments.ipynb</code>. Deliberate
+      separation of concerns: the diffusion module doesn't need to know what
+      scale its target lives on; the caller does.</p>
+    </div>
+
+    <div class="filecard">
+      <h3>Two separate datasets, not one shared one</h3>
+      <p><code>data/</code> and <code>data_diffusion/</code> were never meant
+      to be interchangeable — the discriminability/classifier work needs
+      discrete, matched-decay comparison points; the regression work needs
+      continuous coverage across the full &delta; range.</p>
+    </div>
+
+    <div class="filecard">
+      <h3>env_coupling_gate kept its name even after drift reused the slot</h3>
+      <p>A rename to something more generic (<code>cycle_error_gate</code>)
+      was proposed and explicitly declined, to keep the original name's
+      history legible in the code rather than optimize for abstract accuracy.</p>
+    </div>
+
+    <div class="filecard">
+      <h3>Both data directories are gitignored and regenerable</h3>
+      <p>Neither <code>data/</code> nor <code>data_diffusion/</code> is
+      committed — both can be rebuilt exactly from the harness given the same
+      seeds, and committing hundreds of megabytes of parquet would bloat the
+      repo for no benefit.</p>
+    </div>
+  </section>
+
+  <section class="act">
+    <div class="kicker">Assumptions currently baked in — not yet tested or relaxed</div>
+
+    <div class="filecard">
+      <h3>Fixed Hamiltonian shape</h3>
+      <p><code>couple_with_env</code>'s <code>J=1.7, hx=1.47, hy=-1.05</code>
+      (from the PRX non-Markovian RB paper) are held fixed everywhere; only
+      &delta; varies. The diffusion model has no basis in its training data
+      to generalize to a different Hamiltonian shape.</p>
+    </div>
+
+    <div class="filecard">
+      <h3>One environment qubit (d<sub>E</sub>=2)</h3>
+      <p>Minimal by design, left as a knob to grow later. Real hardware
+      environments are presumably richer.</p>
+    </div>
+
+    <div class="filecard">
+      <h3>1-qubit system only</h3>
+      <p>Every dataset generated so far uses <code>n_sys_qubits=1</code>. The
+      harness's K (Pauli-subsampling) parameter is currently inert as a
+      result — subsampling only triggers for <code>n_sys_qubits&gt;2</code>,
+      and at 1 qubit there are only 3 non-identity Paulis anyway.</p>
+    </div>
+
+    <div class="filecard">
+      <h3>No SPAM error anywhere in current data</h3>
+      <p>All three noise classes run through <code>AerSampler()</code> with
+      no injected <code>NoiseModel</code>, and state prep / measurement are
+      ideal. The feature pipeline's non-cancellation of the SPAM prefactor
+      A<sub>P</sub> is currently a non-issue — but is a real gap the moment
+      real hardware data (which does have SPAM) is used.</p>
+    </div>
+
+    <div class="filecard">
+      <h3>Jitter's mid-circuit reset is measurably slower in Aer</h3>
+      <p>Confirmed empirically (jitter: ~14s vs memory/drift: ~1s for the
+      same circuit count). Mid-circuit reset is non-unitary and disables
+      Aer's fast shot-sampling path, forcing a per-shot simulation — not a
+      bug, an expected cost, worth knowing before scaling jitter's dataset up.</p>
+    </div>
+  </section>
+
+  <section class="act">
+    <div class="kicker">Where the spec and the built system have diverged</div>
+    <p>The spec's own Progress Tracker was last updated 2026-07-11 (commit
+    <code>675cdb1</code>). Everything below happened after that and isn't
+    reflected in its checkboxes:</p>
+
+    <div class="divergence">
+      <h3>The baseline classifier (commit d896137)</h3>
+      <p>Phase 1's Step 5c (cross-Pauli structure) and 5d (verdict) are
+      marked incomplete in the tracker, but in practice the cross-Pauli/
+      X-channel finding fell out of the same plot as the 3-way variance
+      comparison — no separate 5c build was needed. Step 5b's "reduce to one
+      number" genuinely was never built though — the separation is shown
+      qualitatively (grows vs. flat), not as a single summary statistic.</p>
+    </div>
+
+    <div class="divergence">
+      <h3>Phase 2 (define the inference target) was never formally written up</h3>
+      <p>Instead of picking the smallest physically-meaningful
+      multi-dimensional output space as the spec calls for, the project
+      pragmatically scaffolded a <strong>simpler stand-in target</strong> —
+      single &delta;, memory class only — to prove the diffusion estimator
+      works end-to-end first. The real Phase-2 decision is still open.</p>
+    </div>
+
+    <div class="divergence">
+      <h3>Phase 3's stated gate was never literally checked</h3>
+      <p>The gate is "beats the Phase-1 hand-designed baseline" (the
+      classifier, 88.7%). The diffusion model that got built is a continuous
+      regression on &delta;, evaluated only against the Gaussian-net control
+      — not against the classifier. These solve different tasks, so no
+      single number currently satisfies the spec's original gate condition
+      as written.</p>
+    </div>
+
+    <div class="divergence">
+      <h3>The dataset split into two wasn't planned in the spec</h3>
+      <p>It emerged pragmatically once the regression task's need for
+      continuous &delta; coverage became clear, and hasn't been folded back
+      into the spec as an explicit design decision until this doc.</p>
+    </div>
+
+    <div class="divergence">
+      <h3>Phase 4 (real hardware) is completely untouched</h3>
+      <p>Everything built so far is simulated. The plan's angle #3
+      (explaining the real &lambda;<sub>XX</sub>=0.42 ibm_fez anomaly) and the
+      spec's Brillant gate-implementation cross-check are both still purely
+      aspirational.</p>
+    </div>
+  </section>
+
+  <div class="nav-footer">
+    <a href="key_results.html">&larr; Key Results</a>
+    <a href="index.html">back to index &rarr;</a>
+  </div>
+</div>
+</body>
+</html>

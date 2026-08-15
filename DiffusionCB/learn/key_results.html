@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DiffusionCB — Key Results</title>
+<style>
+  :root {
+    --bg: #12151b; --surface: #1a1f28; --surface-border: #2a3140;
+    --text: #eef1f6; --text-dim: #8b96a8; --team-a: #f2a541; --team-b: #4fc3c9;
+    --accent: #f2a541;
+  }
+  :root[data-theme="light"] {
+    --bg: #eef1f5; --surface: #ffffff; --surface-border: #d8dee6;
+    --text: #1a1f28; --text-dim: #5b6472; --team-a: #d9820f; --team-b: #1f8f96;
+    --accent: #b8690a;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #12151b; --surface: #1a1f28; --surface-border: #2a3140;
+      --text: #eef1f6; --text-dim: #8b96a8; --team-a: #f2a541; --team-b: #4fc3c9; --accent: #f2a541;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: -apple-system, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    display: flex; justify-content: center; padding: 48px 20px 80px; margin: 0;
+  }
+  .page { width: 100%; max-width: 700px; display: flex; flex-direction: column; gap: 40px; }
+  .eyebrow { font-family: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace; font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-dim); }
+  .eyebrow a { color: inherit; }
+  h1 { margin: 6px 0 0; font-size: 32px; font-weight: 700; letter-spacing: -0.01em; text-wrap: balance; }
+  .lede { margin: 12px 0 0; font-size: 16.5px; line-height: 1.6; color: var(--text-dim); max-width: 62ch; }
+
+  code {
+    font-family: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace;
+    font-size: 0.92em; background: var(--surface); border: 1px solid var(--surface-border);
+    border-radius: 4px; padding: 1px 6px; color: var(--text);
+  }
+
+  section.act { display: flex; flex-direction: column; gap: 14px; padding-top: 10px; border-top: 1px solid var(--surface-border); }
+  .act .kicker {
+    font-family: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace;
+    font-size: 11.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-dim);
+  }
+  .act .loc {
+    font-family: ui-monospace, monospace; font-size: 11px; color: var(--team-b);
+    background: var(--surface); border: 1px solid var(--surface-border);
+    border-radius: 5px; padding: 3px 9px; display: inline-block; align-self: flex-start;
+  }
+  .act h2 { font-size: 22px; font-weight: 700; margin: 2px 0 0; letter-spacing: -0.005em; text-wrap: balance; }
+  .act p { font-size: 15.5px; line-height: 1.68; margin: 0; max-width: 62ch; }
+  .act p + p { margin-top: 4px; }
+
+  .filetree {
+    font-family: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace;
+    font-size: 12.5px; line-height: 1.6; white-space: pre; overflow-x: auto;
+    background: var(--surface); border: 1px solid var(--surface-border);
+    border-radius: 10px; padding: 14px 18px; color: var(--text);
+  }
+
+  table.worked {
+    width: 100%; border-collapse: collapse; font-size: 14px;
+    background: var(--surface); border: 1px solid var(--surface-border);
+    border-radius: 10px; overflow: hidden;
+  }
+  table.worked th, table.worked td {
+    text-align: left; padding: 9px 14px; border-bottom: 1px solid var(--surface-border);
+    font-variant-numeric: tabular-nums;
+  }
+  table.worked th { color: var(--text-dim); font-weight: 600; font-size: 11.5px; letter-spacing: 0.04em; text-transform: uppercase; font-family: ui-monospace, monospace; }
+  table.worked td.hi { color: var(--accent); font-weight: 700; font-family: ui-monospace, monospace; }
+  table.worked td.num { font-family: ui-monospace, monospace; }
+  table.worked tr:last-child td { border-bottom: none; }
+  .table-wrap { overflow-x: auto; }
+
+  .keynote {
+    font-size: 15px; line-height: 1.65; background: var(--surface);
+    border-left: 3px solid var(--team-a); border-radius: 6px; padding: 12px 16px;
+  }
+  .keynote strong { color: var(--text); }
+
+  .nav-footer {
+    border-top: 1px solid var(--surface-border); padding-top: 22px;
+    font-size: 13.5px; display: flex; justify-content: space-between; color: var(--text-dim);
+  }
+  .nav-footer a { color: var(--accent); text-decoration: none; }
+  .nav-footer a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+<div class="page">
+  <div>
+    <div class="eyebrow"><a href="index.html">DiffusionCB / reference index</a> &middot; as of 2026-08-15</div>
+    <h1>Key Results — Graphs and Numbers That Matter</h1>
+    <p class="lede">
+      Organized in the order they'd actually be argued, with the notebook +
+      cell each one lives in, so you can jump straight to the source.
+    </p>
+  </div>
+
+  <section class="act">
+    <span class="loc">generate_cb_data.ipynb · cell 2</span>
+    <h2>1. Sanity gate — does the harness even work?</h2>
+    <p>Measured vs analytically-expected &lambda;<sub>P</sub> for known
+    Markovian noise models (depolarizing, dephasing, bit-flip, biased), run
+    through the full harness rather than computed by hand.</p>
+    <div class="table-wrap">
+    <table class="worked">
+      <thead><tr><th>noise</th><th>expected λ</th><th>measured λ</th><th>Δ</th></tr></thead>
+      <tbody><tr><td>depolarizing p=0.05</td><td class="num">0.9500</td><td class="num">0.9499</td><td class="num">−0.0001</td></tr></tbody>
+    </table>
+    </div>
+    <div class="keynote"><strong>Why it matters:</strong> everything else in the repo assumes this gate passes. If you regenerate data on a new environment, rerun this cell first.</div>
+  </section>
+
+  <section class="act">
+    <span class="loc">generate_cb_data.ipynb · cells 3–5</span>
+    <h2>2. What each noise class looks like, qualitatively</h2>
+    <p><strong>memory</strong> (non-Markovian, E carried): bent, non-monotonic
+    decay on a log-y axis. <strong>jitter</strong> (stochastic-Markovian, E
+    reset each cycle): straight, monotonic decay — memoryless.
+    <strong>drift</strong> (coherent, no E): decays with a coherent wobble —
+    non-monotonic like memory, but for a completely different reason.</p>
+    <div class="keynote"><strong>Why it matters:</strong> memory and drift can look superficially similar from this view alone — motivating the need for a sharper fingerprint than "does the curve look bent."</div>
+  </section>
+
+  <section class="act">
+    <span class="loc">analyze_noise_separability.ipynb · cells 3–5</span>
+    <h2>3. The core finding — raw data separates what λ<sub>P</sub> can't</h2>
+    <p>At matched parameter (0.10), memory and jitter's &lambda;<sub>P</sub>
+    are barely different — standard CB genuinely cannot tell them apart:</p>
+    <div class="table-wrap">
+    <table class="worked">
+      <thead><tr><th>class</th><th>λ<sub>X</sub></th><th>λ<sub>Y</sub></th><th>λ<sub>Z</sub></th></tr></thead>
+      <tbody>
+        <tr><td>memory</td><td class="num">0.98</td><td class="num">0.934</td><td class="num">0.920</td></tr>
+        <tr><td>jitter</td><td class="num">0.98</td><td class="num">0.904</td><td class="num">0.890</td></tr>
+      </tbody>
+    </table>
+    </div>
+    <p><strong>Cell 3 (5a):</strong> plots this averaged view directly —
+    confirms visually how close the two classes' decay curves sit. "What
+    standard CB sees": a near-null result.</p>
+    <p><strong>Cells 4–5 (5b, then shot-noise-floor-subtracted):</strong>
+    plots Var<sub>l</sub>(f<sub>pml</sub>) vs m for the same two classes.
+    Memory's variance <strong>grows with m</strong> (compounding correlation
+    across cycles); jitter's stays <strong>flat</strong> (memoryless —
+    averages out). Cell 5 subtracts the binomial shot-noise floor
+    (<code>4·n_plus·n_minus/shots³</code>) and confirms the separation
+    survives.</p>
+    <div class="keynote"><strong>This is the money plot of the whole project:</strong> the exact same λ<sub>P</sub>, a qualitatively different variance-vs-m shape.</div>
+  </section>
+
+  <section class="act">
+    <span class="loc">analyze_noise_separability.ipynb · cell 6</span>
+    <h2>4. The cross-Pauli fingerprint — separating drift from memory</h2>
+    <p>Extends the comparison to all three classes, at a data-driven matched
+    decay level (not hardcoded — computed from the actual overlap of each
+    class's achievable decay range; example run: <code>{'drift': 0.4,
+    'jitter': 0.1, 'memory': 0.1}</code>). Plotted per Pauli.</p>
+    <p><strong>Finding:</strong> drift's variance on the X channel stays
+    essentially flat — a coherent X-rotation commutes with the X Pauli it
+    can't disturb its own axis. Memory disturbs X too. This is the
+    fingerprint that separates the two non-monotonic-looking classes that
+    cell 2's qualitative view alone couldn't.</p>
+  </section>
+
+  <section class="act">
+    <span class="loc">baseline_classifier.ipynb · cell 3</span>
+    <h2>5. The classifier — reading only the discarded spread</h2>
+    <div class="filetree">fold accuracies: [0.911 0.9   0.867 0.9   0.856]
+mean accuracy: 0.887 +/- 0.022</div>
+    <p>3-class, 5-fold stratified CV, chance = 33%. Features are exactly 3
+    numbers per example — the variance-vs-m slope per Pauli — with no
+    &lambda;<sub>P</sub> anywhere in the feature set. This is the concrete
+    proof that finding #3's signal is strong enough to build a working
+    detector on, not just visible on a plot.</p>
+  </section>
+
+  <section class="act">
+    <span class="loc">sbi_experiments.ipynb · cells 5 and 8</span>
+    <h2>6. The δ-recovery proof of concept — Gaussian net vs diffusion</h2>
+    <p><strong>Scope:</strong> memory class only, &delta; &isin; [0.02, 0.25],
+    10,000 runs, one seed=0 train/test split (8,000/2,000), one trained model
+    per method.</p>
+    <div class="table-wrap">
+    <table class="worked">
+      <thead><tr><th>metric</th><th>Gaussian net</th><th>diffusion</th><th>ideal</th></tr></thead>
+      <tbody>
+        <tr><td>RMSE</td><td class="num">0.0050</td><td class="num hi">0.0024</td><td class="num">—</td></tr>
+        <tr><td>±1σ coverage</td><td class="num">70.2%</td><td class="num">74.2%</td><td class="num">68%</td></tr>
+        <tr><td>±2σ coverage</td><td class="num">90.8%</td><td class="num hi">97.2%</td><td class="num">95%</td></tr>
+        <tr><td>std of z</td><td class="num">1.22</td><td class="num hi">0.90</td><td class="num">1.0</td></tr>
+        <tr><td>|z|>2</td><td class="num">9.2%</td><td class="num hi">2.9%</td><td class="num">4.6%</td></tr>
+      </tbody>
+    </table>
+    </div>
+    <p><strong>Reading it correctly:</strong> the Gaussian net was measurably
+    overconfident (std z = 1.22, too many outliers past 2&sigma;). Diffusion's
+    sampled posterior closed that gap and improved point accuracy at the same
+    time. This is honest, scoped evidence within this one experiment — not
+    yet evidence about generalization, multi-parameter targets, or real
+    hardware.</p>
+    <div class="keynote">
+      Note the Phase-3 gate comparison this result is actually missing: it
+      was never benchmarked against finding #5's classifier, only against the
+      Gaussian-net control. See Decisions and Assumptions.
+    </div>
+    <p><strong>Model sizes / training:</strong> Gaussian net 21,506 params /
+    2,000 epochs; diffusion 23,553 params / 5,000 epochs (needed more —
+    training curve still dropping at epoch 1900).</p>
+  </section>
+
+  <div class="nav-footer">
+    <a href="data_pipeline.html">&larr; Data Pipeline</a>
+    <a href="decisions_and_assumptions.html">next: Decisions and Assumptions &rarr;</a>
+  </div>
+</div>
+</body>
+</html>
