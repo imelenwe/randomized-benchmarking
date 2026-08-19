@@ -424,6 +424,7 @@ from pathlib import Path
 
 DATA_DIR = Path("data"); DATA_DIR.mkdir(parents=True, exist_ok=True)
 
+# called from CB harness gen ipynb which helps in creating data for different noise classes and parameters. It sweeps over the classes, params, and seeds to generate data files for each combination. If a file already exists, it skips that run to allow resuming.
 def sweep(classes, params, seeds, base, data_dir=DATA_DIR):
     sampler = AerSampler()
     for noise_class in classes:
@@ -437,10 +438,11 @@ def sweep(classes, params, seeds, base, data_dir=DATA_DIR):
                 cfg = CBConfig(n_sys_qubits=base["n_sys_qubits"], shots=base["shots"],
                                m_list=base["m_list"], L=base["L"], K=base["K"],
                                label="CB_Cycle", rng=np.random.default_rng(seed),
-                               **noise_knobs(noise_class, param))
+                               **noise_knobs(noise_class, param)) #The ** prefix — Python's dict-unpacking operator. **{"a": 1, "b": 2} inside a function call expands to a=1, b=2 as keyword arguments. So **noise_knobs(noise_class, param) expands that returned dict into n_env=1, env_coupling_gate=..., reset_env=False, feeding them straight into the CBConfig(...) call as its final keyword arguments.
                 paulis  = make_paulis(cfg.n_sys_qubits, cfg.rng, cfg.K)
                 Gmap, _ = make_cycle(base["cycle"], cfg.n_sys_qubits)
                 Ggate   = UnitaryGate(Operator(Gmap).data, label=cfg.label)
+                # the actual CB run
                 rec     = run_cb(paulis, cfg, Gmap, Ggate, sampler)
 
                 label = {"noisetype": noise_class, "param": pname,
