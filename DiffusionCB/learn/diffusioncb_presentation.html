@@ -352,6 +352,18 @@
     #deck-nav { bottom: 0.6rem; }
     #slide-counter { top: 0.75rem; right: 1rem; }
   }
+
+  /* ============ Print (PDF export): one slide per page ============ */
+  @media print {
+    html, body { background: var(--bg) !important; }
+    * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+    @page { size: 13.333in 7.5in; margin: 0; }
+    #deck-viewport { position: static !important; inset: auto !important; overflow: visible !important; height: auto !important; }
+    #deck { display: block !important; width: auto !important; height: auto !important; transform: none !important; transition: none !important; }
+    .slide { width: 13.333in !important; height: auto !important; min-height: 7.5in; overflow: visible !important; page-break-after: always; break-after: page; page-break-inside: avoid; }
+    .slide:last-child { page-break-after: auto; break-after: auto; }
+    #deck-nav, #slide-counter, #nav-prev, #nav-next { display: none !important; }
+  }
 </style>
 
 <div id="deck-viewport">
