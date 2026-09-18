@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Build plan</title>
+<style>
+  :root {
+    --bg: #12151b; --surface: #1a1f28; --surface-border: #2a3140;
+    --text: #eef1f6; --text-dim: #8b96a8; --accent: #f2a541;
+    --done: #3fb572; --done-bg: #1c2b22;
+  }
+  :root[data-theme="light"] {
+    --bg: #eef1f5; --surface: #ffffff; --surface-border: #d8dee6;
+    --text: #1a1f28; --text-dim: #5b6472; --accent: #b8690a;
+    --done: #1f8f55; --done-bg: #e7f5ec;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #12151b; --surface: #1a1f28; --surface-border: #2a3140;
+      --text: #eef1f6; --text-dim: #8b96a8; --accent: #f2a541;
+      --done: #3fb572; --done-bg: #1c2b22;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: -apple-system, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    display: flex; justify-content: center; padding: 52px 20px 90px; margin: 0;
+  }
+  .page { width: 100%; max-width: 720px; }
+  .eyebrow {
+    font-family: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace;
+    font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-dim);
+  }
+  h1 { margin: 8px 0 6px; font-size: 30px; font-weight: 700; letter-spacing: -0.01em; }
+  .lede { margin: 0 0 8px; font-size: 15.5px; color: var(--text-dim); max-width: 62ch; line-height: 1.55; }
+  .progress-row { display: flex; align-items: center; gap: 10px; margin: 18px 0 6px; }
+  .progress-track { flex: 1; height: 6px; border-radius: 3px; background: var(--surface-border); overflow: hidden; }
+  .progress-fill { height: 100%; background: var(--done); border-radius: 3px; }
+  .progress-label {
+    font-family: ui-monospace, monospace; font-size: 12px; color: var(--text-dim);
+    white-space: nowrap;
+  }
+
+  .phase { margin-top: 40px; }
+  .phase-title {
+    font-size: 12px; font-family: ui-monospace, monospace; letter-spacing: 0.08em;
+    text-transform: uppercase; color: var(--accent); font-weight: 700;
+    padding-bottom: 8px; border-bottom: 1px solid var(--surface-border); margin-bottom: 12px;
+  }
+  .items { display: flex; flex-direction: column; gap: 8px; }
+  .item {
+    display: grid; grid-template-columns: 24px 1fr; gap: 12px; align-items: start;
+    background: var(--surface); border: 1px solid var(--surface-border); border-radius: 8px;
+    padding: 11px 14px;
+  }
+  .item.done { background: var(--done-bg); border-color: var(--done); }
+  .box {
+    width: 20px; height: 20px; border-radius: 5px; border: 1.5px solid var(--surface-border);
+    display: flex; align-items: center; justify-content: center; margin-top: 1px;
+  }
+  .item.done .box { background: var(--done); border-color: var(--done); }
+  .box svg { width: 13px; height: 13px; display: none; }
+  .item.done .box svg { display: block; }
+  .item.done .box svg path { stroke: var(--bg); }
+  :root[data-theme="light"] .item.done .box svg path { stroke: #fff; }
+  .item-body { display: flex; flex-direction: column; gap: 2px; }
+  .item-title { font-size: 14.5px; font-weight: 600; }
+  .item.done .item-title { color: var(--done); }
+  .item-desc { font-size: 13px; color: var(--text-dim); line-height: 1.5; }
+  .item-tag {
+    display: inline-block; font-family: ui-monospace, monospace; font-size: 10px;
+    letter-spacing: 0.04em; text-transform: uppercase; color: var(--text-dim);
+    border: 1px solid var(--surface-border); border-radius: 4px; padding: 1px 6px; margin-top: 4px;
+  }
+
+  .footer {
+    margin-top: 48px; border-top: 1px solid var(--surface-border); padding-top: 18px;
+    font-size: 13px; color: var(--text-dim); line-height: 1.6;
+  }
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="eyebrow">MultiDimDiffusionCB &middot; build plan &middot; updated 2026-09-16</div>
+  <h1>Recovering (&theta;<sub>J</sub>, &theta;<sub>x</sub>, &theta;<sub>y</sub>) from raw CB data</h1>
+  <p class="lede">
+    Living checklist &mdash; ticked off as each step actually lands, not planned
+    in advance. See <a href="analysis/index.html" style="color:var(--accent)">analysis/</a>
+    for how the target and the training range were decided.
+  </p>
+
+  <div class="progress-row">
+    <div class="progress-track"><div class="progress-fill" style="width:14%"></div></div>
+    <div class="progress-label" id="progress-label">2 / 14 done</div>
+  </div>
+
+  <div class="phase">
+    <div class="phase-title">Phase 0 &middot; Setup</div>
+    <div class="items">
+      <div class="item done">
+        <div class="box"><svg viewBox="0 0 16 16" fill="none"><path d="M3 8.5L6.3 12L13 4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <div class="item-body">
+          <span class="item-title">Split into its own top-level folder</span>
+          <span class="item-desc">MultiDimDiffusionCB/, sibling of CB/, DiffusionCB/, RB/ &mdash; kept separate on purpose, reuses DiffusionCB's engine by import rather than duplicating it.</span>
+        </div>
+      </div>
+      <div class="item done">
+        <div class="box"><svg viewBox="0 0 16 16" fill="none"><path d="M3 8.5L6.3 12L13 4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <div class="item-body">
+          <span class="item-title">Decide the target and the training range</span>
+          <span class="item-desc">(&theta;<sub>J</sub>,&theta;<sub>x</sub>,&theta;<sub>y</sub>) not (delta,J,hx,hy); box = [&minus;1,1]&sup3;, checked 3 independent ways. Written up in analysis/index.html.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="phase">
+    <div class="phase-title">Phase 1 &middot; Data generation</div>
+    <div class="items">
+      <div class="item">
+        <div class="box"></div>
+        <div class="item-body">
+          <span class="item-title">Write the joint sweep function</span>
+          <span class="item-desc">Draws (&theta;<sub>J</sub>,&theta;<sub>x</sub>,&theta;<sub>y</sub>) uniformly from the box per run, calls couple_with_env(1.0, J=&theta;J, hx=&theta;x, hy=&theta;y) directly &mdash; delta fixed at 1, so the 3 drawn numbers ARE the physical unknowns, no separate delta involved.</span>
+          <span class="item-tag">next</span>
+        </div>
+      </div>
+      <div class="item">
+        <div class="box"></div>
+        <div class="item-body">
+          <span class="item-title">Smoke test &mdash; a handful of runs</span>
+          <span class="item-desc">~10&ndash;20 runs, eyeball the parquet output and confirm features extract cleanly, before committing hours of compute.</span>
+        </div>
+      </div>
+      <div class="item">
+        <div class="box"></div>
+        <div class="item-body">
+          <span class="item-title">Kick off the full generation run</span>
+          <span class="item-desc">Background, resumable, checkpointed per-file like the original sweep. Run count: to confirm.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="phase">
+    <div class="phase-title">Phase 2 &middot; Model</div>
+    <div class="items">
+      <div class="item">
+        <div class="box"></div>
+        <div class="item-body">
+          <span class="item-title">Extend feature loading to a 3-D target</span>
+          <span class="item-desc">Same 36 input features, unchanged; pull 3 label columns instead of 1.</span>
+        </div>
+      </div>
+      <div class="item">
+        <div class="box"></div>
+        <div class="item-body">
+          <span class="item-title">Generalize the diffusion model from 1-D to 3-D</span>
+          <span class="item-desc">NoisePredictor input/output width, and the couple of hardcoded "1"s in sample_posterior_inference's reverse-sampling loop.</span>
+        </div>
+      </div>
+      <div class="item">
+        <div class="box"></div>
+        <div class="item-body">
+          <span class="item-title">Train</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="phase">
+    <div class="phase-title">Phase 3 &middot; Validation (the actual deliverable)</div>
+    <div class="items">
+      <div class="item">
+        <div class="box"></div>
+        <div class="item-body">
+          <span class="item-title">Aggregate metrics per parameter</span>
+          <span class="item-desc">Reuse sbi_eval.py's report() &mdash; RMSE + calibration, called once per parameter.</span>
+        </div>
+      </div>
+      <div class="item">
+        <div class="box"></div>
+        <div class="item-body">
+          <span class="item-title">Recoverability map across the whole box</span>
+          <span class="item-desc">Not just one test point &mdash; check for RB-blind corners (commuting-limit regions flagged in the literature scan) where the model would converge to a meaningless answer.</span>
+        </div>
+      </div>
+      <div class="item">
+        <div class="box"></div>
+        <div class="item-body">
+          <span class="item-title">Bimodality / mode-recovery check</span>
+          <span class="item-desc">Coverage alone won't catch a split (sign-ambiguous) posterior &mdash; cluster each test example's samples and flag when they separate into two groups.</span>
+        </div>
+      </div>
+      <div class="item">
+        <div class="box"></div>
+        <div class="item-body">
+          <span class="item-title">Worked-example posterior plots</span>
+          <span class="item-desc">"Here's the input, here's the sampled cloud, here's the truth" &mdash; a few chosen cases, including one near the anomaly's own strength (&theta;&asymp;0.4&ndash;0.7).</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="phase">
+    <div class="phase-title">Phase 4 &middot; Write-up</div>
+    <div class="items">
+      <div class="item">
+        <div class="box"></div>
+        <div class="item-body">
+          <span class="item-title">Record what Stage A actually found</span>
+          <span class="item-desc">Including wherever the honest answer is "only up to a sign" or "not in this corner of the box."</span>
+        </div>
+      </div>
+      <div class="item">
+        <div class="box"></div>
+        <div class="item-body">
+          <span class="item-title">Bring back to the group</span>
+          <span class="item-desc">Next Friday-7PM meeting, whenever this lands.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    Not on this list yet: real-hardware CB run (meeting next-step #2) and other
+    Hamiltonian forms (Bijita/Sangkha's next-step #3) &mdash; both come after
+    Phase 3 shows this is worth taking further.
+  </div>
+</div>
+</body>
+</html>

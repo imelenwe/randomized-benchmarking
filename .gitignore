@@ -7,6 +7,9 @@ DiffusionCB/data/
 # continuous-dial data for diffusion (regenerable via sweep_for_diffusion())
 DiffusionCB/data_diffusion/
 
+# joint (theta_J, theta_x, theta_y) data (regenerable via sweep_joint())
+MultiDimDiffusionCB/code/data/
+
 # generation run logs
 *.log
 

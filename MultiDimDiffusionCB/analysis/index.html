@@ -1,0 +1,309 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Choosing the coupling-strength prior</title>
+<style>
+  :root {
+    --bg: #12151b; --surface: #1a1f28; --surface-2: #20263133; --surface-border: #2a3140;
+    --text: #eef1f6; --text-dim: #8b96a8; --accent: #f2a541; --accent-warm: #e8834a;
+    --ok: #4fc3c9; --danger: #e2665a;
+  }
+  :root[data-theme="light"] {
+    --bg: #eef1f5; --surface: #ffffff; --surface-2: #f3f0e8; --surface-border: #d8dee6;
+    --text: #1a1f28; --text-dim: #5b6472; --accent: #b8690a; --accent-warm: #a8551f;
+    --ok: #1f8f96; --danger: #b8362a;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #12151b; --surface: #1a1f28; --surface-2: #20263133; --surface-border: #2a3140;
+      --text: #eef1f6; --text-dim: #8b96a8; --accent: #f2a541; --accent-warm: #e8834a;
+      --ok: #4fc3c9; --danger: #e2665a;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: -apple-system, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    display: flex; justify-content: center; padding: 52px 20px 90px; margin: 0;
+    line-height: 1.62;
+  }
+  .page { width: 100%; max-width: 760px; }
+  .eyebrow {
+    font-family: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace;
+    font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-dim);
+  }
+  h1 { margin: 8px 0 0; font-size: 32px; font-weight: 700; letter-spacing: -0.01em; text-wrap: balance; }
+  .lede { margin: 14px 0 0; font-size: 16.5px; color: var(--text-dim); max-width: 62ch; }
+  h2 {
+    margin: 52px 0 14px; font-size: 21px; font-weight: 700; letter-spacing: -0.005em;
+    padding-bottom: 10px; border-bottom: 1px solid var(--surface-border);
+  }
+  h3 { margin: 26px 0 10px; font-size: 16px; font-weight: 700; color: var(--accent); }
+  p { margin: 12px 0; max-width: 68ch; font-size: 15px; }
+  p code, li code, td code {
+    font-family: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace;
+    font-size: 0.9em; background: var(--surface); border: 1px solid var(--surface-border);
+    border-radius: 4px; padding: 1px 6px; color: var(--text);
+  }
+  ul, ol { max-width: 66ch; padding-left: 22px; }
+  li { margin: 6px 0; font-size: 15px; }
+
+  .tldr {
+    margin-top: 22px; font-size: 15px; line-height: 1.6; background: var(--surface);
+    border-left: 3px solid var(--accent); border-radius: 6px; padding: 14px 18px;
+  }
+  .tldr strong { color: var(--text); }
+
+  .formula {
+    font-family: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace;
+    font-size: 14px; line-height: 1.7; white-space: pre-wrap; word-break: break-word;
+    background: var(--surface); border: 1px solid var(--surface-border); border-radius: 8px;
+    padding: 14px 18px; margin: 14px 0; color: var(--text);
+  }
+  .formula .dim { color: var(--text-dim); }
+  .formula .hl { color: var(--accent); }
+
+  .correction {
+    margin: 16px 0; background: var(--surface); border-left: 3px solid var(--danger);
+    border-radius: 6px; padding: 16px 20px;
+  }
+  .correction .tag {
+    font-family: ui-monospace, monospace; font-size: 11px; letter-spacing: 0.06em;
+    text-transform: uppercase; color: var(--danger); font-weight: 700; margin-bottom: 6px; display: block;
+  }
+
+  .decision {
+    margin: 16px 0; background: var(--surface); border-left: 3px solid var(--ok);
+    border-radius: 6px; padding: 16px 20px;
+  }
+  .decision .tag {
+    font-family: ui-monospace, monospace; font-size: 11px; letter-spacing: 0.06em;
+    text-transform: uppercase; color: var(--ok); font-weight: 700; margin-bottom: 6px; display: block;
+  }
+
+  .table-wrap { overflow-x: auto; margin: 14px 0; }
+  table {
+    border-collapse: collapse; width: 100%; font-size: 13.5px;
+    font-variant-numeric: tabular-nums;
+  }
+  th, td { text-align: left; padding: 7px 12px; border-bottom: 1px solid var(--surface-border); }
+  thead th {
+    font-family: ui-monospace, monospace; font-size: 11px; letter-spacing: 0.05em;
+    text-transform: uppercase; color: var(--text-dim); font-weight: 600;
+  }
+  td.num { font-family: ui-monospace, "SF Mono", Consolas, monospace; }
+  td.dim { color: var(--text-dim); }
+  tr.saturated td { color: var(--text-dim); font-style: italic; }
+
+  .steps { display: flex; flex-direction: column; gap: 10px; margin: 14px 0; }
+  .step {
+    display: grid; grid-template-columns: 28px 1fr; gap: 12px;
+    background: var(--surface); border: 1px solid var(--surface-border); border-radius: 8px;
+    padding: 12px 16px;
+  }
+  .step .n { font-family: ui-monospace, monospace; font-weight: 700; color: var(--accent); }
+  .step p { margin: 0; font-size: 14.5px; }
+
+  .footer {
+    margin-top: 60px; border-top: 1px solid var(--surface-border); padding-top: 20px;
+    font-size: 13px; color: var(--text-dim);
+  }
+  .footer a { color: var(--accent); }
+  .footer ul { padding-left: 18px; }
+  .footer li { font-size: 13px; margin: 4px 0; }
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="eyebrow">MultiDimDiffusionCB &middot; analysis &middot; 2026-09-15</div>
+  <h1>Choosing the coupling-strength prior for joint (&theta;<sub>J</sub>, &theta;<sub>x</sub>, &theta;<sub>y</sub>) inference</h1>
+  <p class="lede">
+    How we went from "predict J, hx, hy, and delta" to a well-posed 3-parameter
+    problem, what range those 3 parameters actually get trained on, and a
+    correction to that reasoning caught mid-discussion &mdash; kept in, not
+    edited out, because the correction is the useful part.
+  </p>
+
+  <div class="tldr">
+    <strong>Where we landed:</strong> infer (&theta;<sub>J</sub>, &theta;<sub>x</sub>, &theta;<sub>y</sub>)
+    &mdash; the per-cycle rotation angles, not delta/J/hx/hy separately &mdash; over
+    a training box of roughly <strong>[&minus;1, 1] radians</strong> per axis. That
+    range comes from three independent checks (rotation math, this project's own
+    simulated decay data, and real IBM hardware error rates) that all land in the
+    same neighborhood, plus a deliberate margin so the box also covers the
+    already-observed &lambda;<sub>XX</sub>&nbsp;=&nbsp;0.42 anomaly this whole
+    project opened with.
+  </div>
+
+  <h2>1 &middot; Why 4 unknowns collapse to 3</h2>
+
+  <p>
+    The circuit builds its coupling as <code>U = expm(-1j*delta*H)</code> with
+    <code>H = J&middot;X&otimes;X + hx&middot;(X&otimes;I+I&otimes;X) + hy&middot;(Y&otimes;I+I&otimes;Y)</code>.
+    This is the standard quantum-mechanics time-evolution formula, U = e<sup>-iHt</sup>,
+    with delta playing the role of t (a duration) and J, hx, hy playing the role
+    of rates inside H (like a speed). Because H is built by simply adding up
+    J, hx, hy times fixed operators, delta multiplying the whole thing is
+    mathematically identical to folding delta into each coefficient:
+  </p>
+
+  <div class="formula">delta &middot; H(J, hx, hy)  =  H(delta&middot;J, delta&middot;hx, delta&middot;hy)
+
+&#8203;&nbsp;&nbsp;so the circuit only ever depends on the three products:
+&#8203;&nbsp;&nbsp;<span class="hl">theta_J = delta&middot;J,   theta_x = delta&middot;hx,   theta_y = delta&middot;hy</span>
+
+&#8203;&nbsp;&nbsp;(delta, J, hx, hy) and (delta/2, 2J, 2hx, 2hy) build the exact same
+&#8203;&nbsp;&nbsp;circuit, so they produce statistically identical CB data &mdash; no
+&#8203;&nbsp;&nbsp;experiment on this circuit family can ever tell them apart.</div>
+
+  <p>
+    Same logic as distance = speed &times; time: an odometer reading distance
+    alone can never separately recover "fast for a short time" vs. "slow for a
+    long time." theta is the odometer reading; delta, J, hx, hy individually are
+    not recoverable, and don't need to be &mdash; they were never really four
+    separate physical unknowns for this experiment, just one unknown (theta)
+    written in a confusing number of pieces.
+  </p>
+
+  <h2>2 &middot; Three independent checks on the range</h2>
+
+  <h3>Layer 1 &mdash; rotations wrap around (hard ceiling, order pi)</h3>
+  <p>
+    A rotation by angle theta and by theta+2pi are the same physical operation
+    (a clock hand at 13 hours looks identical to 1 hour). So "the entire range
+    of physically distinct theta" was never infinite &mdash; it's already
+    bounded to roughly one turn. Nothing here is an artificial narrowing.
+  </p>
+
+  <h3>Layer 2 &mdash; this project's own simulated decay data</h3>
+  <p>
+    The original 1-D work swept delta over [0.02, 0.25] (with J=1.7 fixed, so
+    theta_J up to about 0.43). Recomputing lambda_P directly from those saved
+    runs (endpoint ratio between m=2 and m=16):
+  </p>
+
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>delta</th><th>theta_J = 1.7&middot;delta</th><th>&lambda;<sub>X</sub></th><th>&lambda;<sub>Y</sub></th><th>&lambda;<sub>Z</sub></th><th>notes</th></tr></thead>
+    <tbody>
+      <tr><td class="num">0.02</td><td class="num dim">0.03</td><td class="num">0.999</td><td class="num">0.997</td><td class="num">0.997</td><td class="dim">barely above the shot-noise floor</td></tr>
+      <tr><td class="num">0.05</td><td class="num dim">0.09</td><td class="num">0.997</td><td class="num">0.992</td><td class="num">0.984</td><td class="dim">&mdash;</td></tr>
+      <tr><td class="num">0.10</td><td class="num dim">0.17</td><td class="num">0.983</td><td class="num">0.959</td><td class="num">0.942</td><td class="dim">&mdash;</td></tr>
+      <tr><td class="num">0.15</td><td class="num dim">0.26</td><td class="num">0.952</td><td class="num">0.945</td><td class="num">0.944</td><td class="dim">&mdash;</td></tr>
+      <tr><td class="num">0.20</td><td class="num dim">0.34</td><td class="num">0.920</td><td class="num">0.950</td><td class="num">&mdash;</td><td class="dim">Z already non-monotonic</td></tr>
+      <tr><td class="num">0.25</td><td class="num dim">0.43</td><td class="num">&mdash;</td><td class="num">0.920</td><td class="num">0.827</td><td class="dim">X non-monotonic, old sweep's edge</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <p>
+    A fresh, wider sweep run directly through the harness (single seed, so noisy
+    point estimates &mdash; this is a trend check, not a calibration) confirms
+    where the signal actually goes past that old edge, using the raw per-m
+    values of f<sub>P,m</sub> rather than a fitted lambda (which stops being a
+    meaningful single number once the decay is non-monotonic):
+  </p>
+
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>delta</th><th>theta_J</th><th>X (m=2&hellip;16)</th><th>character</th></tr></thead>
+    <tbody>
+      <tr><td class="num">0.10</td><td class="num dim">0.17</td><td class="num dim">0.94 &rarr; 0.66</td><td class="dim">clean, monotonic decay</td></tr>
+      <tr><td class="num">0.25</td><td class="num dim">0.43</td><td class="num dim">0.72 &rarr; 0.21</td><td class="dim">still readable, wobbling &mdash; <strong>this is where &lambda;&approx;0.4&ndash;0.2 already shows up</strong></td></tr>
+      <tr><td class="num">0.40</td><td class="num dim">0.68</td><td class="num dim">0.39 &rarr; &minus;0.06</td><td class="dim">crossing zero, structure fading</td></tr>
+      <tr class="saturated"><td class="num">0.60</td><td class="num dim">1.02</td><td class="num dim">&minus;0.04 &hellip; 0.30 (noisy)</td><td>signal essentially scrambled</td></tr>
+      <tr class="saturated"><td class="num">0.80&ndash;1.60</td><td class="num dim">1.4&ndash;2.7</td><td class="num dim">bounces near 0</td><td>fully saturated, no usable structure left</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h3>Layer 3 &mdash; real IBM hardware, cross-checked two independent ways</h3>
+  <p>
+    <strong>From crosstalk spectroscopy:</strong> unwanted qubit-qubit coupling on
+    current superconducting processors is typically 2&ndash;200 kHz, and CB cycle
+    times run roughly 100 ns&ndash;1 &micro;s, giving theta &asymp; 2&pi;&middot;f&middot;tau
+    in the range <strong>0.001&ndash;1</strong>, typically 0.02&ndash;0.2.
+  </p>
+  <p>
+    <strong>From gate calibration reports, across multiple real backends</strong>
+    (not one device): median two-qubit gate error runs about 0.76&ndash;0.83% on
+    Eagle-generation chips (ibm_sherbrooke, ibm_brisbane) and 0.3&ndash;0.5% on
+    newer Heron chips (ibm_torino), best case near 0.1%. Converting error&nbsp;&asymp;&nbsp;theta&sup2;
+    gives theta &asymp; 0.03&ndash;0.1 for <em>designed</em> gates &mdash; engineered
+    to be as small as possible, so this is closer to a noise floor than a
+    working range.
+  </p>
+  <p>
+    Two independent routes &mdash; crosstalk frequencies, and gate-error reports
+    across several real backends &mdash; land in the same 0.02&ndash;0.2
+    neighborhood. That agreement is the actual evidence behind the range, not
+    a single paper's example values.
+  </p>
+
+  <h2>3 &middot; A correction, kept in the record</h2>
+
+  <div class="correction">
+    <span class="tag">what was claimed</span>
+    <p>
+      "Past theta &asymp; 0.5, error is about 25%, and a device that bad
+      wouldn't be a working quantum computer &mdash; so that's the practical
+      ceiling."
+    </p>
+  </div>
+
+  <p>
+    This was wrong, and the mistake is worth naming precisely: it borrowed the
+    error &asymp; theta&sup2; argument from <strong>designed two-qubit gate
+    error</strong> (the thing engineers spend years minimizing, hence genuinely
+    small on any device anyone would sell) and misapplied it to
+    <strong>theta itself &mdash; the unwanted S&ndash;E coupling / crosstalk
+    strength</strong>, which is a completely different quantity. Crosstalk is
+    known to vary a lot between specific qubit pairs depending on frequency
+    proximity and layout; a chip can work fine overall while one pair has
+    much stronger-than-typical coupling. That's not a hypothetical &mdash; it's
+    <strong>exactly what &lambda;<sub>XX</sub>&nbsp;=&nbsp;0.42</strong> on
+    ibm_fez already is: real, measured, on a device that works for everything
+    else. It directly contradicts "that large a value means the device isn't
+    real," because it's already been observed on one.
+  </p>
+
+  <div class="decision">
+    <span class="tag">corrected</span>
+    <p>
+      The real ceiling isn't a broken-device threshold &mdash; it's <strong>signal
+      saturation</strong>: past roughly theta &asymp; 0.7&ndash;1.0 (Layer 2's table,
+      confirmed above), the data goes from wobbly-but-readable to fully
+      scrambled, and no method &mdash; not a fitted lambda, not raw per-shot
+      data, not a diffusion model &mdash; can recover a coupling strength once
+      the circuit has mixed the information away. That's a limit on what CB as
+      an experiment can see, not a claim about what hardware can do. And
+      &lambda;<sub>XX</sub>=0.42 sits well inside the readable side of that
+      line (theta_J &asymp; 0.43 in the table above already produces f-values
+      in that neighborhood), so nothing about the training box needed to
+      change &mdash; only the flawed reasoning behind it did.
+    </p>
+  </div>
+
+  <h2>4 &middot; The actual decision</h2>
+
+  <div class="steps">
+    <div class="step"><span class="n">1</span><p>Target: (&theta;<sub>J</sub>, &theta;<sub>x</sub>, &theta;<sub>y</sub>) &mdash; three numbers, not four. This is a genuine reframing, not an assumption smuggled in: nothing is "given" or held secret, the fourth degree of freedom (an overall delta/H split) was never physically real to begin with.</p></div>
+    <div class="step"><span class="n">2</span><p>Training box: <strong>[&minus;1, 1] radians</strong> per axis, symmetric in sign (to let the model show us whether the sign ambiguity from the identifiability literature actually shows up in this circuit).</p></div>
+    <div class="step"><span class="n">3</span><p>Expected informative sub-region for the current m_list=(2,4,6,8,12,16): roughly 0.02&ndash;0.6&ndash;0.7. Below that, data is noise-floor-limited; above it, saturated. Both edges are real findings to show, not failures to hide.</p></div>
+    <div class="step"><span class="n">4</span><p>Open question carried forward: near the anomaly's own strength (theta&asymp;0.4&ndash;0.7), does the <em>raw per-sequence</em> data (not just the mean-over-l curve shown here) retain structure the averaged view has already lost? That's the same raw-vs-averaged question the whole project's first result was built on &mdash; worth checking specifically in this regime before assuming CB is blind there.</p></div>
+  </div>
+
+  <div class="footer">
+    <p>Companion pieces: <a href="../../DiffusionCB/learn/index.html">DiffusionCB/learn/</a> (the 1-D result and the advisor deck this project grew out of).</p>
+    <ul>
+      <li>Figueroa-Romero et al., <em>Randomized Benchmarking for Non-Markovian Noise</em>, PRX Quantum 2, 040351 (2021) &mdash; source of the S&ndash;E Hamiltonian form and its RB-blindness example (App. G).</li>
+      <li>Sone &amp; Cappellaro, Phys. Rev. A 95, 022335 (2017) &mdash; spin-chain coupling identifiability from a single probe, defined up to sign.</li>
+      <li>IBM Research, <em>Noise characterization and error mitigation on IBM Heron processors</em>, APS Global Physics Summit 2025.</li>
+      <li>IBM Quantum Computers: Evolution, Performance, and Future Directions, arXiv:2410.00916.</li>
+    </ul>
+  </div>
+</div>
+</body>
+</html>
