@@ -117,7 +117,7 @@
 </head>
 <body>
 <div class="page">
-  <div class="eyebrow">MultiDimDiffusionCB &middot; analysis &middot; 2026-09-15</div>
+  <div class="eyebrow">MultiDimDiffusionCB &middot; analysis &middot; started 2026-09-15, updated 2026-09-19</div>
   <h1>Choosing the coupling-strength prior for joint (&theta;<sub>J</sub>, &theta;<sub>x</sub>, &theta;<sub>y</sub>) inference</h1>
   <p class="lede">
     How we went from "predict J, hx, hy, and delta" to a well-posed 3-parameter
@@ -295,11 +295,128 @@
     <div class="step"><span class="n">4</span><p>Open question carried forward: near the anomaly's own strength (theta&asymp;0.4&ndash;0.7), does the <em>raw per-sequence</em> data (not just the mean-over-l curve shown here) retain structure the averaged view has already lost? That's the same raw-vs-averaged question the whole project's first result was built on &mdash; worth checking specifically in this regime before assuming CB is blind there.</p></div>
   </div>
 
+  <h2>5 &middot; The sign problem, confirmed in training</h2>
+
+  <p>
+    Step 4 above flagged an open question: would this circuit actually show the
+    sign ambiguity the identifiability literature predicts? Training the joint
+    (theta_J, theta_x, theta_y) diffusion model answered it &mdash; yes, exactly,
+    and precisely enough to name and fix.
+  </p>
+
+  <h3>What it's called</h3>
+  <p>
+    This isn't an informal name for a bug &mdash; it's a known result in
+    Hamiltonian-identifiability theory, under two related framings:
+  </p>
+  <ul>
+    <li><strong>Sone &amp; Cappellaro</strong> classify spin Hamiltonians as
+      "identifiable" or "non-identifiable" from a single accessible probe,
+      and show some coupling terms are recoverable only <strong>up to
+      sign</strong> &mdash; the measurement record is exactly symmetric under
+      flipping that coefficient's sign.</li>
+    <li><strong>Burgarth &amp; Yuasa</strong>'s more general framework shows
+      that without full state access, a Hamiltonian is identifiable only
+      <strong>up to unitary conjugation</strong> &mdash; only certain algebraic
+      invariants of H survive in the input&ndash;output map, not its raw signed
+      coefficients.</li>
+  </ul>
+  <p>
+    Both describe the same shape of limitation this project hit: the system
+    qubit's measurement statistics can be an <em>even</em> function of a
+    coupling parameter (sensitive to |theta|, blind to its sign), because the
+    environment &mdash; the only place the sign would show up &mdash; is never
+    directly measured.
+  </p>
+
+  <h3>What we actually saw</h3>
+  <p>
+    Correlation between each of the 36 raw CB features and theta_J, checked
+    two ways on the same 10,000 runs:
+  </p>
+
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>target checked</th><th>max |correlation| across all 36 features</th><th>reading</th></tr></thead>
+    <tbody>
+      <tr><td>signed theta_J</td><td class="num">0.017</td><td class="dim">indistinguishable from noise</td></tr>
+      <tr><td>signed theta_x</td><td class="num">0.018</td><td class="dim">indistinguishable from noise</td></tr>
+      <tr><td>signed theta_y</td><td class="num">0.021</td><td class="dim">indistinguishable from noise</td></tr>
+      <tr><td><strong>|theta_J|</strong> (magnitude)</td><td class="num"><strong>0.652</strong></td><td>strong, real signal &mdash; same data, different question</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <p>
+    The magnitude signal isn't even smooth &mdash; binning by |theta_J| shows a
+    step, not a ramp, sitting right at the training box's own realistic/full
+    sampling boundary (0.2):
+  </p>
+
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>|theta_J| decile</th><th>mean_X16 (avg &plusmn; std)</th></tr></thead>
+    <tbody>
+      <tr><td class="num dim">0.00 &ndash; 0.20 (six deciles)</td><td class="num">&asymp; 0.61 &plusmn; 0.33, flat</td></tr>
+      <tr><td class="num dim">0.20 &ndash; 1.00 (four deciles)</td><td class="num">&asymp; 0.17 &plusmn; 0.32, flat</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <p>This carried straight through to the trained model, before vs. after retargeting to |theta|:</p>
+
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>target</th><th>val MSE (1000 epochs)</th><th>corr(model's mean prediction, true value)</th><th>even at |theta_J|&gt;0.5</th></tr></thead>
+    <tbody>
+      <tr><td>signed theta (old)</td><td class="num">0.213</td><td class="num">&minus;0.02 (theta_J)</td><td class="num dim">RMSE 0.78 &asymp; true std 0.76 &mdash; no better than guessing zero</td></tr>
+      <tr><td><strong>|theta| (fixed)</strong></td><td class="num"><strong>0.090</strong></td><td class="num dim">tracks well &mdash; see worked examples below</td><td class="num dim">&mdash;</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>run</th><th>true (theta_J, theta_x, theta_y)</th><th>predicted mean &mdash; signed model</th><th>predicted mean &mdash; |theta| model</th></tr></thead>
+    <tbody>
+      <tr><td class="num dim">3</td><td class="num">0.757, 0.436, 0.346</td><td class="num dim">0.041, 0.005, 0.083 &mdash; collapsed near 0</td><td class="num"><strong>0.762, 0.674, 0.385</strong> &mdash; theta_J almost exact</td></tr>
+      <tr><td class="num dim">9</td><td class="num">0.149, 0.257, 0.007</td><td class="num dim">&minus;0.005, 0.005, 0.007 &mdash; collapsed near 0</td><td class="num"><strong>0.311, 0.257, 0.051</strong> &mdash; theta_x almost exact</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <p>
+    More training epochs only helped <em>after</em> the retarget (val MSE kept
+    falling smoothly to 0.055 by 8000 epochs); before it, 5x more epochs on the
+    signed target moved val MSE almost nothing (0.213 &rarr; 0.169) &mdash; the
+    model wasn't undertrained, it was being asked a question the data can't
+    answer.
+  </p>
+
+  <div class="decision">
+    <span class="tag">what this means for the goal</span>
+    <p>
+      This project started from one question: why is &lambda;<sub>XX</sub> = 0.42
+      on ibm_fez? That number is itself built from the same kind of even,
+      sign-blind statistics as the 36 features above &mdash; so a magnitude-only
+      theta estimate is very likely enough to explain <em>that specific
+      anomaly</em>. What it can't do is hand back a fully-signed Hamiltonian for
+      combining with other coupling mechanisms elsewhere on the chip (Bijita
+      &amp; Sangkha's next-step #3) &mdash; recovering sign would need a
+      measurement that touches the environment somehow, not a better model on
+      this same data. Scoping the writeup honestly: <strong>CB + this diffusion
+      model recovers coupling strength; sign is a separate, harder, open
+      problem</strong>, exactly as the identifiability literature already said
+      it would be.
+    </p>
+  </div>
+
   <div class="footer">
     <p>Companion pieces: <a href="../../DiffusionCB/learn/index.html">DiffusionCB/learn/</a> (the 1-D result and the advisor deck this project grew out of).</p>
     <ul>
       <li>Figueroa-Romero et al., <em>Randomized Benchmarking for Non-Markovian Noise</em>, PRX Quantum 2, 040351 (2021) &mdash; source of the S&ndash;E Hamiltonian form and its RB-blindness example (App. G).</li>
-      <li>Sone &amp; Cappellaro, Phys. Rev. A 95, 022335 (2017) &mdash; spin-chain coupling identifiability from a single probe, defined up to sign.</li>
+      <li>Sone &amp; Cappellaro, <em>Hamiltonian identifiability assisted by a single-probe measurement</em>, Phys. Rev. A 95, 022335 (2017), arXiv:1609.09446 &mdash; spin-chain coupling identifiability from a single probe, some couplings defined only up to sign.</li>
+      <li>Burgarth &amp; Yuasa, <em>Quantum System Identification</em>, Phys. Rev. Lett. 108, 080502 (2012), arXiv:1104.0583 &mdash; general framework: without full state access, a Hamiltonian is identifiable only up to unitary conjugation.</li>
       <li>IBM Research, <em>Noise characterization and error mitigation on IBM Heron processors</em>, APS Global Physics Summit 2025.</li>
       <li>IBM Quantum Computers: Evolution, Performance, and Future Directions, arXiv:2410.00916.</li>
     </ul>

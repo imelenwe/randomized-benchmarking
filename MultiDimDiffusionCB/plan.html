@@ -92,8 +92,8 @@
   </p>
 
   <div class="progress-row">
-    <div class="progress-track"><div class="progress-fill" style="width:14%"></div></div>
-    <div class="progress-label" id="progress-label">2 / 14 done</div>
+    <div class="progress-track"><div class="progress-fill" style="width:57%"></div></div>
+    <div class="progress-label" id="progress-label">8 / 14 done</div>
   </div>
 
   <div class="phase">
@@ -119,26 +119,25 @@
   <div class="phase">
     <div class="phase-title">Phase 1 &middot; Data generation</div>
     <div class="items">
-      <div class="item">
-        <div class="box"></div>
+      <div class="item done">
+        <div class="box"><svg viewBox="0 0 16 16" fill="none"><path d="M3 8.5L6.3 12L13 4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
         <div class="item-body">
           <span class="item-title">Write the joint sweep function</span>
-          <span class="item-desc">Draws (&theta;<sub>J</sub>,&theta;<sub>x</sub>,&theta;<sub>y</sub>) uniformly from the box per run, calls couple_with_env(1.0, J=&theta;J, hx=&theta;x, hy=&theta;y) directly &mdash; delta fixed at 1, so the 3 drawn numbers ARE the physical unknowns, no separate delta involved.</span>
-          <span class="item-tag">next</span>
+          <span class="item-desc">Draws (&theta;<sub>J</sub>,&theta;<sub>x</sub>,&theta;<sub>y</sub>) uniformly from the box per run, calls couple_with_env(1.0, J=&theta;J, hx=&theta;x, hy=&theta;y) directly &mdash; delta fixed at 1, so the 3 drawn numbers ARE the physical unknowns, no separate delta involved. Mixture sampling added after a geometric coverage bug was found in testing.</span>
         </div>
       </div>
-      <div class="item">
-        <div class="box"></div>
+      <div class="item done">
+        <div class="box"><svg viewBox="0 0 16 16" fill="none"><path d="M3 8.5L6.3 12L13 4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
         <div class="item-body">
           <span class="item-title">Smoke test &mdash; a handful of runs</span>
-          <span class="item-desc">~10&ndash;20 runs, eyeball the parquet output and confirm features extract cleanly, before committing hours of compute.</span>
+          <span class="item-desc">100-run batches, eyeballed parquet output and confirmed features extract cleanly before committing hours of compute.</span>
         </div>
       </div>
-      <div class="item">
-        <div class="box"></div>
+      <div class="item done">
+        <div class="box"><svg viewBox="0 0 16 16" fill="none"><path d="M3 8.5L6.3 12L13 4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
         <div class="item-body">
           <span class="item-title">Kick off the full generation run</span>
-          <span class="item-desc">Background, resumable, checkpointed per-file like the original sweep. Run count: to confirm.</span>
+          <span class="item-desc">10,000 runs, background + resumable via run_joint_datagen.py, completed and gitignored under code/data/.</span>
         </div>
       </div>
     </div>
@@ -147,24 +146,30 @@
   <div class="phase">
     <div class="phase-title">Phase 2 &middot; Model</div>
     <div class="items">
-      <div class="item">
-        <div class="box"></div>
+      <div class="item done">
+        <div class="box"><svg viewBox="0 0 16 16" fill="none"><path d="M3 8.5L6.3 12L13 4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
         <div class="item-body">
           <span class="item-title">Extend feature loading to a 3-D target</span>
-          <span class="item-desc">Same 36 input features, unchanged; pull 3 label columns instead of 1.</span>
+          <span class="item-desc">load_joint_features() in joint_experiments.ipynb; same 36 input features, y is now (N,3). Verified against the full 10k-run dataset: 36 feature cols, no theta leakage, 8000/2000 train/test split.</span>
         </div>
       </div>
-      <div class="item">
-        <div class="box"></div>
+      <div class="item done">
+        <div class="box"><svg viewBox="0 0 16 16" fill="none"><path d="M3 8.5L6.3 12L13 4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
         <div class="item-body">
           <span class="item-title">Generalize the diffusion model from 1-D to 3-D</span>
-          <span class="item-desc">NoisePredictor input/output width, and the couple of hardcoded "1"s in sample_posterior_inference's reverse-sampling loop.</span>
+          <span class="item-desc">NoisePredictor input/output width (conditional_dim/target_dim), and the hardcoded "1"s in sample_posterior_inference's reverse-sampling loop -> target_dim. add_noise and train_diffusion's core math needed zero changes -- verified dimension-agnostic by reading what each line keys off.</span>
+          <span class="item-desc" style="color:var(--accent)">TODO: revisit the reverse-mean formula's derivation --
+            mean = (x_t - (1-a_t)/sqrt(1-ab_t)*eps_hat) / sqrt(a_t) -- got the algebra
+            (Bayes-posterior mu_tilde substituted with the x_0 estimate, simplified
+            step by step) but it didn't fully land. Come back to it once Phase 3's
+            numbers are in and there's less else competing for attention.</span>
         </div>
       </div>
-      <div class="item">
-        <div class="box"></div>
+      <div class="item done">
+        <div class="box"><svg viewBox="0 0 16 16" fill="none"><path d="M3 8.5L6.3 12L13 4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
         <div class="item-body">
           <span class="item-title">Train</span>
+          <span class="item-desc">train_diffusion() runs end to end on the real 10k-run dataset -- verified with a 20-epoch smoke run, val MSE dropping (0.998 -> 0.893). Fixed 3 bugs along the way: best_val_loss must start at +inf not 0, a class-name typo, and torch.no_grad() needs the parens.</span>
         </div>
       </div>
     </div>
@@ -178,6 +183,7 @@
         <div class="item-body">
           <span class="item-title">Aggregate metrics per parameter</span>
           <span class="item-desc">Reuse sbi_eval.py's report() &mdash; RMSE + calibration, called once per parameter.</span>
+          <span class="item-tag">next</span>
         </div>
       </div>
       <div class="item">
@@ -192,6 +198,16 @@
         <div class="item-body">
           <span class="item-title">Bimodality / mode-recovery check</span>
           <span class="item-desc">Coverage alone won't catch a split (sign-ambiguous) posterior &mdash; cluster each test example's samples and flag when they separate into two groups.</span>
+          <span class="item-desc" style="color:var(--accent)">CONFIRMED 2026-09-19, not just a risk anymore: raw-feature check on all
+            10k runs shows corr(feature, |theta_J|) up to -0.65, but corr(feature,
+            signed theta_J) ~0.02 -- the data encodes magnitude, not sign. This is
+            exactly why the trained diffusion model's predictions collapsed near 0
+            (MSE-optimal mean of a symmetric +/- target) instead of tracking theta.
+            Also found: model's posterior std (~0.08) was too tight even for a
+            correct bimodal answer -- it hasn't learned to spread across +/- yet
+            either. Also worth checking separately: draw_theta's shared box choice
+            across all 3 thetas per draw may correlate |theta_J|,|theta_x|,|theta_y|
+            with each other -- could confound magnitude-learning across axes.</span>
         </div>
       </div>
       <div class="item">
