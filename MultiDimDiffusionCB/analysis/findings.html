@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Session findings &mdash; 2026-09-19</title>
+<style>
+  :root {
+    --bg: #12151b; --surface: #1a1f28; --surface-2: #20263133; --surface-border: #2a3140;
+    --text: #eef1f6; --text-dim: #8b96a8; --accent: #f2a541; --accent-warm: #e8834a;
+    --ok: #4fc3c9; --danger: #e2665a;
+  }
+  :root[data-theme="light"] {
+    --bg: #eef1f5; --surface: #ffffff; --surface-2: #f3f0e8; --surface-border: #d8dee6;
+    --text: #1a1f28; --text-dim: #5b6472; --accent: #b8690a; --accent-warm: #a8551f;
+    --ok: #1f8f96; --danger: #b8362a;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #12151b; --surface: #1a1f28; --surface-2: #20263133; --surface-border: #2a3140;
+      --text: #eef1f6; --text-dim: #8b96a8; --accent: #f2a541; --accent-warm: #e8834a;
+      --ok: #4fc3c9; --danger: #e2665a;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: -apple-system, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    display: flex; justify-content: center; padding: 52px 20px 90px; margin: 0;
+    line-height: 1.62;
+  }
+  .page { width: 100%; max-width: 760px; }
+  .eyebrow {
+    font-family: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace;
+    font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-dim);
+  }
+  h1 { margin: 8px 0 0; font-size: 32px; font-weight: 700; letter-spacing: -0.01em; text-wrap: balance; }
+  .lede { margin: 14px 0 0; font-size: 16.5px; color: var(--text-dim); max-width: 62ch; }
+  h2 {
+    margin: 52px 0 14px; font-size: 21px; font-weight: 700; letter-spacing: -0.005em;
+    padding-bottom: 10px; border-bottom: 1px solid var(--surface-border);
+  }
+  h3 { margin: 26px 0 10px; font-size: 16px; font-weight: 700; color: var(--accent); }
+  p { margin: 12px 0; max-width: 68ch; font-size: 15px; }
+  p code, li code, td code {
+    font-family: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace;
+    font-size: 0.9em; background: var(--surface); border: 1px solid var(--surface-border);
+    border-radius: 4px; padding: 1px 6px; color: var(--text);
+  }
+  ul, ol { max-width: 66ch; padding-left: 22px; }
+  li { margin: 6px 0; font-size: 15px; }
+
+  .tldr {
+    margin-top: 22px; font-size: 15px; line-height: 1.6; background: var(--surface);
+    border-left: 3px solid var(--accent); border-radius: 6px; padding: 14px 18px;
+  }
+  .tldr strong { color: var(--text); }
+
+  .decision {
+    margin: 16px 0; background: var(--surface); border-left: 3px solid var(--ok);
+    border-radius: 6px; padding: 16px 20px;
+  }
+  .decision .tag {
+    font-family: ui-monospace, monospace; font-size: 11px; letter-spacing: 0.06em;
+    text-transform: uppercase; color: var(--ok); font-weight: 700; margin-bottom: 6px; display: block;
+  }
+
+  .table-wrap { overflow-x: auto; margin: 14px 0; }
+  table {
+    border-collapse: collapse; width: 100%; font-size: 13.5px;
+    font-variant-numeric: tabular-nums;
+  }
+  th, td { text-align: left; padding: 7px 12px; border-bottom: 1px solid var(--surface-border); }
+  thead th {
+    font-family: ui-monospace, monospace; font-size: 11px; letter-spacing: 0.05em;
+    text-transform: uppercase; color: var(--text-dim); font-weight: 600;
+  }
+  td.num { font-family: ui-monospace, "SF Mono", Consolas, monospace; }
+  td.dim { color: var(--text-dim); }
+
+  .steps { display: flex; flex-direction: column; gap: 10px; margin: 14px 0; }
+  .step {
+    display: grid; grid-template-columns: 28px 1fr; gap: 12px;
+    background: var(--surface); border: 1px solid var(--surface-border); border-radius: 8px;
+    padding: 12px 16px;
+  }
+  .step .n { font-family: ui-monospace, monospace; font-weight: 700; color: var(--accent); }
+  .step p { margin: 0; font-size: 14.5px; }
+
+  .footer {
+    margin-top: 60px; border-top: 1px solid var(--surface-border); padding-top: 20px;
+    font-size: 13px; color: var(--text-dim);
+  }
+  .footer a { color: var(--accent); }
+  .footer ul { padding-left: 18px; }
+  .footer li { font-size: 13px; margin: 4px 0; }
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="eyebrow">MultiDimDiffusionCB &middot; findings &middot; session 2026-09-19</div>
+  <h1>Findings &mdash; joint (&theta;<sub>J</sub>, &theta;<sub>x</sub>, &theta;<sub>y</sub>) diffusion inference</h1>
+  <p class="lede">
+    The "pick up from here" doc. For the full narrative with data tables, see
+    <a href="index.html" style="color:var(--accent)">index.html</a>; for the live
+    checklist, see <a href="plan.html" style="color:var(--accent)">plan.html</a>.
+    This page is the crisp summary of what changed this session and what to do next.
+  </p>
+
+  <div class="tldr">
+    <strong>TL;DR</strong> &mdash; the joint diffusion model
+    (&theta;<sub>J</sub>, &theta;<sub>x</sub>, &theta;<sub>y</sub> from raw CB data)
+    is built, trained, and working &mdash; but only after finding and fixing a real
+    physics limitation, not a bug: <strong>raw CB data encodes coupling
+    magnitude, not sign.</strong> Retargeting the model from signed theta to
+    |theta| fixed it (val MSE 0.21 &rarr; 0.06&ndash;0.09). Phase 0&ndash;2 on
+    <a href="plan.html">plan.html</a> is done; Phase 3 (validation) hasn't
+    formally started.
+  </div>
+
+  <h2>What's built (Phase 0&ndash;2, done)</h2>
+  <ul>
+    <li><code>code/joint_sweep.py</code> &mdash; generates CB data for random
+      (&theta;<sub>J</sub>, &theta;<sub>x</sub>, &theta;<sub>y</sub>) triples via
+      <code>couple_with_env</code>. Already run once: <strong>10,000 files</strong>
+      sit in <code>code/data/</code> (gitignored, regenerable via
+      <code>run_joint_datagen.py</code>).</li>
+    <li><code>code/joint_sbi_experiments.ipynb</code> &mdash; the full pipeline:
+      <code>load_joint_features</code> (parquet &rarr; 36 features &rarr; tensors)
+      &rarr; <code>NoisePredictor</code> (the network) &rarr;
+      <code>train_joint_diffusion</code> (training loop) &rarr;
+      <code>sample_joint_posterior</code> (reverse-diffusion sampling &rarr;
+      posterior clouds).</li>
+    <li>Trained model (5000 epochs) gets val MSE &asymp; <strong>0.058</strong>,
+      still improving &mdash; more epochs help (cheap, ~1 min for 5000 epochs);
+      more training <em>data</em> does not (diminishing returns already hit at
+      ~4000 rows).</li>
+  </ul>
+
+  <h2>The sign problem (the main finding)</h2>
+  <p>
+    <strong>What we found:</strong> correlation between the 36 raw CB features
+    and signed theta_J/x/y is ~0.02 (noise) across all 10,000 runs. Correlation
+    with |theta_J| (magnitude) is up to <strong>0.65</strong>. The features are
+    symmetric in theta's sign &mdash; the environment qubit is never measured
+    directly, so its role in fixing the sign is invisible to CB.
+  </p>
+
+  <h3>What it's called in the literature</h3>
+  <p>Verified citations, not guessed &mdash; fetched and cross-checked, not recalled from memory:</p>
+  <ul>
+    <li>Sone &amp; Cappellaro, <em>Hamiltonian identifiability assisted by a
+      single-probe measurement</em>, Phys. Rev. A 95, 022335 (2017),
+      arXiv:1609.09446 &mdash; some couplings from a single accessible probe are
+      identifiable only up to sign.</li>
+    <li>Burgarth &amp; Yuasa, <em>Quantum System Identification</em>, Phys. Rev.
+      Lett. 108, 080502 (2012), arXiv:1104.0583 &mdash; without full state
+      access, a Hamiltonian is identifiable only up to unitary conjugation.</li>
+  </ul>
+
+  <h3>The fix applied</h3>
+  <p>
+    <code>load_joint_features</code> now returns <code>y = np.abs(theta_J,
+    theta_x, theta_y)</code> instead of signed values &mdash; range [0,1], not
+    [-1,1]. Predictions now track true magnitude well (e.g. true
+    theta_J=0.757 &rarr; predicted 0.76). Full before/after tables are in
+    <a href="index.html">index.html</a> &sect;5.
+  </p>
+
+  <div class="decision">
+    <span class="tag">what this means for the original goal</span>
+    <p>
+      Explaining &lambda;<sub>XX</sub>=0.42 on ibm_fez: likely fine.
+      &lambda;<sub>XX</sub> itself is built from the same kind of sign-blind
+      statistics, so a magnitude-only theta estimate should be enough to test
+      "is a coupling of about this strength consistent with the observed
+      anomaly." What it can't do is hand back a fully-signed Hamiltonian for
+      combining with other mechanisms elsewhere on the chip &mdash; that needs a
+      different measurement, not a better model on this same data.
+    </p>
+  </div>
+
+  <h2>Cross-axis leakage (secondary finding, smaller effect)</h2>
+  <p>
+    Separate question: does theta_x's true value leak into theta_J's predicted
+    value (not a sign issue &mdash; a magnitude-confusion issue)? Checked directly:
+  </p>
+
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>check</th><th>result</th><th>reading</th></tr></thead>
+    <tbody>
+      <tr><td>off-diagonal error correlation (e.g. theta_J error vs. true theta_x)</td><td class="num">-0.11 to -0.14</td><td class="dim">small &mdash; no major cross-axis confusion</td></tr>
+      <tr><td>diagonal error correlation (theta_J error vs. true theta_J)</td><td class="num">-0.43 to -0.54</td><td class="dim">ordinary regression-to-mean shrinkage, not confusion</td></tr>
+      <tr><td>per-axis R&sup2;</td><td class="num">J: 0.79, x: 0.74, y: 0.97</td><td class="dim">theta_y recovered especially well</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <p>
+    <strong>Verified mathematically</strong> (not just empirically): commuting
+    Hamiltonian terms (e.g. theta_y=0, X-type only) give <em>zero</em> leakage
+    by construction &mdash; shifting theta_x by a fixed amount moves the same
+    eigenvalue by exactly the same amount regardless of theta_J. With theta_y
+    genuinely nonzero (the real, non-commuting case), the same shift in theta_x
+    moves the eigenvalue by a <em>different</em> amount depending on theta_J
+    (0.35 &rarr; 0.39 &rarr; 0.40) &mdash; leakage is real, structurally enabled
+    by non-commuting terms, but current data shows it's a <em>soft</em>,
+    secondary effect, not dominant. Unlike sign, this is not an exact symmetry
+    &mdash; more/better data can likely reduce it further.
+  </p>
+
+  <h2>Literature scan: is there something better than CB?</h2>
+  <p>Looked for alternatives that could recover more than CB does (verified via web search and direct paper fetch, not guessed):</p>
+  <ul>
+    <li><strong>Two-qubit joint/simultaneous readout + process tomography</strong>
+      (PRL 102, 200402; PRX Quantum 1, 010305) &mdash;
+      <strong>the most promising concrete lever.</strong> The sign-blindness
+      theorems above assume the environment is never measured. In our setup
+      "the environment" is a real, individually addressable superconducting
+      qubit, not a true inaccessible bath &mdash; so this assumption is a choice
+      inherited from the original 1-D design, not a law of physics. Measuring
+      both qubits (not marginalizing over the second) is a well-established
+      real capability and directly targets the mechanism that causes sign loss.</li>
+    <li>Process Tensor Tomography (PRX Quantum 3, 020344) and the Transfer
+      Tensor Method &mdash; generalize CB/RB to capture non-Markovian memory more
+      fully. Worth reading if the two-qubit route doesn't pan out.</li>
+    <li><em>Optimal Ansatz-free Hamiltonian Learning In Situ</em>, PRX Quantum
+      6, 040315 (2025) &mdash; recent, prestigious, but ancilla-free/control-free
+      like CB; doesn't obviously solve the sign problem either.</li>
+    <li><em>Efficiently learning non-Markovian noise in many-body quantum
+      simulators</em>, arXiv:2511.16772 (Nov 2025) &mdash; read in full:
+      single-probe, no-ancilla protocol for many-body <strong>lattice</strong>
+      simulators, Gaussian-noise assumption, classical (non-ML) estimator.
+      Different scale and goal from this project; doesn't address sign
+      ambiguity. Useful only as evidence this is a live, current (2025)
+      research area, not a ready-made fix.</li>
+  </ul>
+
+  <div class="decision">
+    <span class="tag">recommendation</span>
+    <p>
+      Don't pivot away from CB. Extend it &mdash; test whether raw joint
+      two-qubit measurement outcomes (both qubits, not just the system qubit
+      with the environment traced out) break the sign symmetry, using the
+      existing harness (<code>couple_with_env</code> already builds the 2-qubit
+      unitary; <code>measure_P</code> currently discards qubit 2's outcome).
+      Small, testable, targeted experiment before considering a bigger pivot.
+    </p>
+  </div>
+
+  <h2>Is any of this publishable?</h2>
+  <p>
+    Yes, as-is, independent of anything further: a rigorous, numerically
+    verified demonstration of a known-but-rarely-empirically-confirmed
+    Hamiltonian identifiability limit (Sone &amp; Cappellaro; Burgarth &amp;
+    Yuasa), inside a concrete SBI/diffusion-model pipeline on realistic CB
+    data, with hard numbers (not just the abstract theorem). Worth bringing to
+    the next Friday-7PM meeting as a real result, not a stall.
+  </p>
+
+  <h2>Next steps (Phase 3&ndash;4 on plan.html, not started yet)</h2>
+  <div class="steps">
+    <div class="step"><span class="n">1</span><p><strong>Aggregate metrics per parameter</strong> &mdash; run sbi_eval.py's report() once per theta axis on the full 2000-run test set (RMSE + calibration), not just the 10-row eyeball table already done.</p></div>
+    <div class="step"><span class="n">2</span><p><strong>Recoverability map across the whole box</strong> &mdash; check for regions (small-theta noise floor, saturated large-theta corners) where the model's estimate becomes meaningless, not just report one aggregate number.</p></div>
+    <div class="step"><span class="n">3</span><p><strong>Bimodality / mode-recovery check</strong> &mdash; now informed by the confirmed sign finding: check whether the pre-fix (signed-theta) model's posterior samples cluster into two groups near +|theta| and -|theta| (true bimodality) rather than just collapsing to zero, as a secondary confirmation of the mechanism.</p></div>
+    <div class="step"><span class="n">4</span><p><strong>Worked-example posterior plots</strong> &mdash; a few chosen test runs, "here's the input, here's the sampled cloud, here's the truth," including one near the anomaly's own strength (theta&asymp;0.4&ndash;0.7).</p></div>
+    <div class="step"><span class="n">5</span><p><strong>Write-up</strong> &mdash; record Phase 3's findings, bring back to the group.</p></div>
+    <div class="step"><span class="n">6</span><p><strong>Separately, the two-qubit joint-readout experiment</strong> described above &mdash; not on plan.html yet, worth adding as its own phase once Phase 3 is done.</p></div>
+  </div>
+
+  <div class="footer">
+    <p>See also: <a href="index.html">index.html</a> (the full range-decision writeup and &sect;5's data tables) and <a href="plan.html">plan.html</a> (the live checklist).</p>
+  </div>
+</div>
+</body>
+</html>

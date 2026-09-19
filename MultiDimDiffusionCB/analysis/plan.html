@@ -79,16 +79,19 @@
     margin-top: 48px; border-top: 1px solid var(--surface-border); padding-top: 18px;
     font-size: 13px; color: var(--text-dim); line-height: 1.6;
   }
+  .footer a { color: var(--accent); }
 </style>
 </head>
 <body>
 <div class="page">
-  <div class="eyebrow">MultiDimDiffusionCB &middot; build plan &middot; updated 2026-09-16</div>
+  <div class="eyebrow">MultiDimDiffusionCB &middot; build plan &middot; updated 2026-09-19</div>
   <h1>Recovering (&theta;<sub>J</sub>, &theta;<sub>x</sub>, &theta;<sub>y</sub>) from raw CB data</h1>
   <p class="lede">
     Living checklist &mdash; ticked off as each step actually lands, not planned
-    in advance. See <a href="analysis/index.html" style="color:var(--accent)">analysis/</a>
-    for how the target and the training range were decided.
+    in advance. See <a href="index.html" style="color:var(--accent)">the analysis writeup</a>
+    for how the target and the training range were decided, and
+    <a href="findings.html" style="color:var(--accent)">findings.html</a> for the
+    2026-09-19 session summary (the sign problem, and where to pick up next).
   </p>
 
   <div class="progress-row">
@@ -110,7 +113,7 @@
         <div class="box"><svg viewBox="0 0 16 16" fill="none"><path d="M3 8.5L6.3 12L13 4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
         <div class="item-body">
           <span class="item-title">Decide the target and the training range</span>
-          <span class="item-desc">(&theta;<sub>J</sub>,&theta;<sub>x</sub>,&theta;<sub>y</sub>) not (delta,J,hx,hy); box = [&minus;1,1]&sup3;, checked 3 independent ways. Written up in analysis/index.html.</span>
+          <span class="item-desc">(&theta;<sub>J</sub>,&theta;<sub>x</sub>,&theta;<sub>y</sub>) not (delta,J,hx,hy); box = [&minus;1,1]&sup3;, checked 3 independent ways. Written up in index.html.</span>
         </div>
       </div>
     </div>
@@ -150,7 +153,7 @@
         <div class="box"><svg viewBox="0 0 16 16" fill="none"><path d="M3 8.5L6.3 12L13 4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
         <div class="item-body">
           <span class="item-title">Extend feature loading to a 3-D target</span>
-          <span class="item-desc">load_joint_features() in joint_experiments.ipynb; same 36 input features, y is now (N,3). Verified against the full 10k-run dataset: 36 feature cols, no theta leakage, 8000/2000 train/test split.</span>
+          <span class="item-desc">load_joint_features() in joint_sbi_experiments.ipynb; same 36 input features, y is now (N,3). Verified against the full 10k-run dataset: 36 feature cols, no theta leakage, 8000/2000 train/test split.</span>
         </div>
       </div>
       <div class="item done">
@@ -207,7 +210,8 @@
             correct bimodal answer -- it hasn't learned to spread across +/- yet
             either. Also worth checking separately: draw_theta's shared box choice
             across all 3 thetas per draw may correlate |theta_J|,|theta_x|,|theta_y|
-            with each other -- could confound magnitude-learning across axes.</span>
+            with each other -- could confound magnitude-learning across axes. Full
+            writeup: <a href="findings.html">findings.html</a> and <a href="index.html">index.html</a> &sect;5.</span>
         </div>
       </div>
       <div class="item">
@@ -241,9 +245,11 @@
   </div>
 
   <div class="footer">
-    Not on this list yet: real-hardware CB run (meeting next-step #2) and other
-    Hamiltonian forms (Bijita/Sangkha's next-step #3) &mdash; both come after
-    Phase 3 shows this is worth taking further.
+    <p>Not on this list yet: real-hardware CB run (meeting next-step #2), the
+    two-qubit joint-readout experiment flagged in
+    <a href="findings.html">findings.html</a> as a way to test sign recovery,
+    and other Hamiltonian forms (Bijita/Sangkha's next-step #3) &mdash; all come
+    after Phase 3 shows this is worth taking further.</p>
   </div>
 </div>
 </body>
