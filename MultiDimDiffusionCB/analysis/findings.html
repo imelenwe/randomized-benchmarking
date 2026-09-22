@@ -210,6 +210,63 @@
     &mdash; more/better data can likely reduce it further.
   </p>
 
+  <h3>Why theta_y is recovered so much better (solved, verified)</h3>
+  <p>
+    An earlier pass at this (single-feature correlation, then a linear
+    "fainter signal" story) was wrong on both counts and was removed from
+    this doc. Here is the version that's actually verified end to end.
+  </p>
+  <p>
+    <strong>Step 1 &mdash; build an independent first-principles replica.</strong>
+    Wrote a from-scratch simulator of the exact real pipeline (same
+    Hamiltonian, same m_list=(2,4,6,8,12,16), same 30-twirl averaging, same
+    theta-draw mixture) and generated 1,500 synthetic runs with the
+    <em>theoretical</em> (infinite-shot, zero sampling noise) value of every
+    feature. It reproduced the real data almost exactly &mdash; best
+    single-feature correlation 0.643/0.632/0.970 for J/x/y (real data: 0.65/
+    0.64/0.97), same top features (mean_Y6/Y4 for J and x, mean_X2/X4 for
+    y). This proves the asymmetry is pure structural physics, not shot
+    noise or a training artifact.
+  </p>
+  <p>
+    <strong>Step 2 &mdash; look at the actual shape of the curve.</strong>
+    Binning runs by |theta_J| and averaging the feature mean_Y6 in each bin:
+    it starts at only 0.77 (not near 1) with high spread (std&asymp;0.28)
+    even at the smallest theta_J, then goes completely flat by theta_J&asymp;0.33
+    and stays flat out to 0.9 &mdash; the top half of the range carries
+    almost no signal. mean_X2 vs. theta_y, by contrast, starts at 0.998 with
+    almost no spread (std&asymp;0.002) and decays smoothly and monotonically
+    across the <em>whole</em> range. Something is adding noise and causing
+    early saturation specifically on theta_J's channel.
+  </p>
+  <p>
+    <strong>Step 3 &mdash; find the contaminant.</strong> Held theta_x near
+    zero (|theta_x| &lt; 0.05) and recomputed theta_J's correlation with
+    mean_Y6: it jumped from <strong>-0.643 to -0.949</strong> &mdash; almost
+    theta_y's own cleanliness. Symmetric check confirms it: holding theta_J
+    near zero moves theta_x's correlation with the same feature from -0.627
+    to -0.918. Meanwhile theta_y's correlation with its own feature
+    (mean_X2) barely moves whether theta_J/theta_x are free or held at
+    zero (-0.970 vs. -0.950) &mdash; nothing was ever contaminating it.
+  </p>
+  <div class="decision">
+    <span class="tag">the mechanism</span>
+    <p>
+      theta_J and theta_x <strong>share one observable channel and
+      contaminate each other</strong>; theta_y has an exclusive channel that
+      neither of them touches. theta_J's generator (X&otimes;X) and theta_x's
+      generator (X&otimes;I+I&otimes;X) commute with each other (verified by
+      direct diagonalization), so their effects combine into one shared
+      "X-type" signature that shows up on the <em>same</em> Pauli-Y/Z
+      survival-probability features. Whatever the other one happens to be
+      doing shows up as noise and early saturation in that shared channel.
+      theta_y's generator (Y&otimes;I+I&otimes;Y) doesn't commute with either
+      of the other two, so it drives a separate channel (Pauli-X survival)
+      that's entirely its own &mdash; nothing else writes over it, so it
+      comes through nearly noise-free.
+    </p>
+  </div>
+
   <h2>Literature scan: is there something better than CB?</h2>
   <p>Looked for alternatives that could recover more than CB does (verified via web search and direct paper fetch, not guessed):</p>
   <ul>

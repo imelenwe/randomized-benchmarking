@@ -22,3 +22,6 @@ __pycache__/
 
 # VSCode personal editor settings
 .vscode/
+
+# personal Claude Code permission settings
+.claude/
