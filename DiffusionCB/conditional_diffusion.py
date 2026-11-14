@@ -1,6 +1,6 @@
 """Conditional diffusion for delta: p(delta | 36 CB features).
 
-Notation (KV sir's lectures): x_0 = delta, x_1..x_T = progressively noisier latents.
+Notation: x_0 = delta, x_1..x_T = progressively noisier latents.
 
     FORWARD (fixed, no learning) -- the closed-form jump:
 
@@ -70,7 +70,7 @@ def add_noise(x_0, t, alpha_bar):
     alpha_bar : (T,)   from noise_lookup
 
     Returns (x_t, eps), both (N, 1). eps is the training label -- we drew it,
-    so we know it (KV sir's notes, line 73).
+    so we know it.
     """
     ab = alpha_bar[t].unsqueeze(1) #Shape surgery, and it's load-bearing. x_0 is (N,1). Multiplying (N,) by (N,1) makes broadcasting produce (N,N) — a silent, wrong, memory-exploding result. (N,1) * (N,1) gives (N,1), correct. This is the single easiest bug to write here.
     eps = torch.randn_like(x_0) # draws N(0,1) with x_0's shape, dtype, and device

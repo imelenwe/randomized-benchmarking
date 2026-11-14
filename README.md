@@ -19,10 +19,18 @@ GitHub's notebook viewer is currently failing on this repo (see
 
 ## Layout
 
+Start at [`learn/index.html`](learn/index.html): the study guide that links everything below in order.
+
 ```
-CB/          Cycle Benchmarking notebook + spec
-RB/          Standard + Interleaved RB notebook + spec
-reports/     CB report (markdown source, PDF, figures)
+learn/                  study guide (start here)
+  explainers/           HTML explainer pages
+  handwritten-notes/    scanned derivations and proofs (PDF)
+RB/                     Standard + Interleaved RB notebook + plans
+CB/                     Cycle Benchmarking notebook + plan
+DiffusionCB/            noise with memory: 1-D diffusion model (one coupling number)
+MultiDimDiffusionCB/    noise with memory: joint (theta_J, theta_x, theta_y) model + analysis pages
+reports/                CB report (markdown source, PDF, figures)
+  working-notes/        CB gotchas and the ibm_fez hardware run log
 ```
 
 ## Known issues

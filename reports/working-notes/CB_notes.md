@@ -1,8 +1,6 @@
 # CB — Working Notes (gotchas, surprises, deferred items)
 
-> Personal notebook for the [Cycle Benchmarking report](../CB_report.md). Not
-> for sharing — candid notes about what tripped me up, surprises worth
-> remembering, and things I parked. If you come back to CB in 6 months, read
+> Personal notebook for the [Cycle Benchmarking report](../CB_report.md). If you come back to CB in 6 months, read
 > this before re-reading the code.
 
 ## A · Gotchas and fixes

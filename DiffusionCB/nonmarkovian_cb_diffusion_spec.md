@@ -1,6 +1,6 @@
 # Research Spec: Inferring Non-Markovian Noise Structure from Cycle Benchmarking Data via Simulation-Based Inference
 
-**Author:** Lnv, supervised by Prof. Bijita; collaboration with Prof. Sanghka, IIT Hyderabad
+**Author:** Lnv
 **Spec owner:** Claude Code (maintained from 2026-07-06; full ownership delegated by Lnv)
 **Date:** July 2026
 **Status:** Phase 1 in progress — generator + data factory complete; discriminability study (Step 5) underway (5a, 5b done). See **Progress tracker** below.
