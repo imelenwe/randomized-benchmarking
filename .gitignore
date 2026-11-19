@@ -25,3 +25,6 @@ __pycache__/
 
 # personal Claude Code permission settings
 .claude/
+
+# private study notes (Deep Basics Notebook etc.) — never pushed; repo is public
+learn/private/
